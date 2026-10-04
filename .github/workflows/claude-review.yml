@@ -57,7 +57,7 @@ jobs:
                whose generator was not rerun.
 
             2. Contradictions with what the repository already states.
-               Hold the diff against the project's rules and decisions
+               Hold the diff against AGENTS.md, the rules and decisions
                in aidlc/spaces/default/memory/ (project.md first), the
                design notes in aidlc/spaces/default/knowledge/aidlc-shared/,
                and the README.md nearest the changed code. Read the

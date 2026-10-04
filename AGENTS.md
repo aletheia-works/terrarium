@@ -129,7 +129,7 @@ Run the matching task before pushing; the ruleset requires these checks.
 `lint-autofix-apply.yml` pushes the result back to the PR's branch with
 `TF_TOKEN_GITHUB`. The patch is untrusted (it comes from running the PR's
 own `mise.toml`), so the apply stage accepts only content edits to existing
-files of a type the fixers handle, outside `.github/`. That token only
+files of a type the fixers handle, outside `.github/workflows/`. That token only
 reaches this repository, so the push needs the branch to live here; for a
 PR from a fork, run `mise run lint:all:fix` locally.
 

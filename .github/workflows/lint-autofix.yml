@@ -30,8 +30,15 @@ jobs:
           cache: true
           experimental: true
 
+      # The fixers exit non-zero when an issue is left that they cannot fix
+      # (Biome does so after applying the fixes it can), so a failure here
+      # must not drop the patch. It is reported as a warning instead, and
+      # Polyglot lint, a required check, fails the PR for whatever is left.
       - name: Run polyglot lint autofix
-        run: mise run lint:all:fix || true
+        run: |
+          if ! mise run lint:all:fix; then
+            echo "::warning::lint:all:fix exited non-zero: an issue it cannot fix is left, or a tool failed. Polyglot lint reports what remains."
+          fi
 
       - name: Capture autofix patch
         run: |

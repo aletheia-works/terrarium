@@ -16,12 +16,15 @@ Bun.serve({
     const { pathname } = new URL(request.url);
     let path = normalize(join(root, decodeURIComponent(pathname)));
     if (pathname.endsWith('/')) path = join(path, 'index.html');
-    const body = file(path);
-    if (!(await body.exists()))
-      return new Response('not found', { status: 404 });
+    // CORS on every response, 404s included, as GitHub Pages does: without
+    // it a missing file looks like a network error to another origin.
     const headers: Record<string, string> = {
       'access-control-allow-origin': '*',
     };
+    const body = file(path);
+    if (!(await body.exists())) {
+      return new Response('not found', { status: 404, headers });
+    }
     if (!pathname.startsWith('/plain/')) {
       headers['cross-origin-opener-policy'] = 'same-origin';
       headers['cross-origin-embedder-policy'] = 'require-corp';

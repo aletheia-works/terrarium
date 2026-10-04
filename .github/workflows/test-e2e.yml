@@ -36,10 +36,12 @@ jobs:
         run: bun install --frozen-lockfile
 
       # The tests run the published v2.6.1 build of aube, a tag that never
-      # moves, against this pull request's page, element and Session.
+      # moves, against this pull request's page, element, Session and
+      # fixtures (staged into web/dist/fixtures by stage-web.sh).
       - name: Fetch the v2.6.1 build and assemble the site
         run: |
           bash scripts/fetch-builds.sh v2.6.1
+          bash scripts/stage-web.sh
           mise run site:build
 
       - name: Cache Playwright system packages (${{ matrix.browser }})

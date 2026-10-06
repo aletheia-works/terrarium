@@ -5686,3 +5686,651 @@
 **Details**: shell command: $jjBin = Get-ChildItem "$env:LOCALAPPDATA/mise/installs/jj/*/jj.exe" | Select-Object -Last 1 -ExpandProperty FullName; & $jjBin split --parallel -m 'chore: add 
 
 ---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:20:15Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shell command: Get-Content packages/terrarium/e2e/pitchfork.spec.ts; Get-Content packages/terrarium/e2e/host/pitchfork-iframe.html; Get-Content web/terminal.mjs
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:22:14Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shell command: $ghBin = Get-ChildItem "$env:LOCALAPPDATA/mise/installs/gh/*/gh.exe","$env:LOCALAPPDATA/mise/installs/gh/*/bin/gh.exe","$env:LOCALAPPDATA/mise/installs/github-c
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:23:55Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>\AGENTS.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:24:11Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>\README.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:24:23Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>\packages\terrarium\README.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:24:32Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>\.github\workflows\test-e2e.yml
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:25:30Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shell command: Get-Content .vendor/u1-pf/webkit-ci-first/data/c7d153ac9cfde972b319e8a0b453115cccb29d51.md; Add-Type -AssemblyName System.IO.Compression.FileSystem; $traceZip =
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:28:02Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shell command: Get-Content packages/terrarium/playwright.config.ts; rg --files packages/terrarium | rg 'server|element.ts|load-tool'; Get-Content scripts/build-pitchfork.sh; r
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:29:49Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shell command: Get-Content packages/terrarium/e2e/serve.ts; Get-Content packages/terrarium/src/terminal.ts | Select-Object -Skip 80 -First 65; Get-Content packages/terrarium/s
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:30:39Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>\.github\workflows\test-e2e.yml
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:33:13Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>\packages\terrarium\e2e\serve.ts
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:33:24Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>\packages\terrarium\e2e\pitchfork.spec.ts
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-06T01:34:26Z
+**Event**: SENSOR_FIRED
+**Fire id**: d8d739a9
+**Sensor ID**: linter
+**Stage slug**: code-generation
+**Output path**: packages/terrarium/e2e/serve.ts
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-06T01:34:28Z
+**Event**: SENSOR_PASSED
+**Fire id**: d8d739a9
+**Sensor ID**: linter
+**Stage slug**: code-generation
+**Output path**: packages/terrarium/e2e/serve.ts
+**Duration ms**: 1824
+**Note**: tool-unavailable
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-06T01:34:30Z
+**Event**: SENSOR_FIRED
+**Fire id**: b648c80b
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: packages/terrarium/e2e/serve.ts
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-06T01:34:33Z
+**Event**: SENSOR_PASSED
+**Fire id**: b648c80b
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: packages/terrarium/e2e/serve.ts
+**Duration ms**: 2200
+**Note**: tool-unavailable
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-06T01:34:41Z
+**Event**: SENSOR_FIRED
+**Fire id**: a685bd44
+**Sensor ID**: linter
+**Stage slug**: code-generation
+**Output path**: packages/terrarium/e2e/pitchfork.spec.ts
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-06T01:34:44Z
+**Event**: SENSOR_PASSED
+**Fire id**: a685bd44
+**Sensor ID**: linter
+**Stage slug**: code-generation
+**Output path**: packages/terrarium/e2e/pitchfork.spec.ts
+**Duration ms**: 2189
+**Note**: tool-unavailable
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-10-06T01:34:45Z
+**Event**: SENSOR_FIRED
+**Fire id**: d969d565
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: packages/terrarium/e2e/pitchfork.spec.ts
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-10-06T01:34:49Z
+**Event**: SENSOR_PASSED
+**Fire id**: d969d565
+**Sensor ID**: type-check
+**Stage slug**: code-generation
+**Output path**: packages/terrarium/e2e/pitchfork.spec.ts
+**Duration ms**: 2943
+**Note**: tool-unavailable
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:35:14Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shell command: $bunBin = Get-ChildItem "$env:LOCALAPPDATA/mise/installs/bun/*/bin/bun.exe" | Select-Object -Last 1 -ExpandProperty FullName; & $bunBin run test:e2e -- --projec
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:37:21Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shell command: $bunBin = Get-ChildItem "$env:LOCALAPPDATA/mise/installs/bun/*/bin/bun.exe" | Select-Object -Last 1 -ExpandProperty FullName; $env:PATH = "$(Split-Path $bunBin)
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:41:26Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shell command: mise run lint:all 2>&1 | Tee-Object .vendor/u1-pf/lint-all-review-followup.log; exit $LASTEXITCODE
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:43:11Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shell command: $jjBin = Get-ChildItem "$env:LOCALAPPDATA/mise/installs/jj/*/jj.exe" | Select-Object -Last 1 -ExpandProperty FullName; & $jjBin diff --stat; & $jjBin split --on
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:44:16Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shell command: $jjBin = Get-ChildItem "$env:LOCALAPPDATA/mise/installs/jj/*/jj.exe" | Select-Object -Last 1 -ExpandProperty FullName; & $jjBin bookmark set codex/pitchfork-bro
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:46:42Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shell command: $ghBin = Get-ChildItem "$env:LOCALAPPDATA/mise/installs/gh/*/gh.exe","$env:LOCALAPPDATA/mise/installs/gh/*/bin/gh.exe","$env:LOCALAPPDATA/mise/installs/github-c
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:47:34Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shell command: $jjBin = Get-ChildItem "$env:LOCALAPPDATA/mise/installs/jj/*/jj.exe" | Select-Object -Last 1 -ExpandProperty FullName; & $jjBin diff --from main@upstream --to c
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:49:29Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shell command: $ghBin = Get-ChildItem "$env:LOCALAPPDATA/mise/installs/gh/*/gh.exe","$env:LOCALAPPDATA/mise/installs/gh/*/bin/gh.exe","$env:LOCALAPPDATA/mise/installs/github-c
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:50:06Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shell command: $ghBin = Get-ChildItem "$env:LOCALAPPDATA/mise/installs/gh/*/gh.exe","$env:LOCALAPPDATA/mise/installs/gh/*/bin/gh.exe","$env:LOCALAPPDATA/mise/installs/github-c
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:50:38Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shell command: $ghBin = Get-ChildItem "$env:LOCALAPPDATA/mise/installs/gh/*/gh.exe","$env:LOCALAPPDATA/mise/installs/gh/*/bin/gh.exe","$env:LOCALAPPDATA/mise/installs/github-c
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:53:51Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Write
+**Details**: <project-dir>\aidlc\spaces\default\intents\261004-pitchfork-continuation\construction\ci-review-followup.md
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-06T01:54:07Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/261004-pitchfork-continuation/construction/ci-review-followup.md
+**Context**: construction > ci-review-followup.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:54:20Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shell command: $ghBin = Get-ChildItem "$env:LOCALAPPDATA/mise/installs/gh/*/gh.exe","$env:LOCALAPPDATA/mise/installs/gh/*/bin/gh.exe","$env:LOCALAPPDATA/mise/installs/github-c
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:55:26Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shell command: $jjBin = Get-ChildItem "$env:LOCALAPPDATA/mise/installs/jj/*/jj.exe" | Select-Object -Last 1 -ExpandProperty FullName; & $jjBin new; exit $LASTEXITCODE
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:56:37Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shell command: mise run markdown:check 2>&1 | Tee-Object .vendor/u1-pf/markdown-ci-followup.log; exit $LASTEXITCODE
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:58:07Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>\.github\workflows\test-e2e.yml
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T01:58:32Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shell command: mise run actions:check 2>&1 | Tee-Object .vendor/u1-pf/actions-cache-path-check.log; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; $jjBin = Get-ChildItem "$e
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T02:00:19Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>\.github\workflows\test-e2e.yml
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T02:00:36Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shell command: mise run actions:check 2>&1 | Tee-Object .vendor/u1-pf/actions-cache-path-check.log; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; $jjBin = Get-ChildItem "$e
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T02:03:24Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shell command: $jjBin = Get-ChildItem "$env:LOCALAPPDATA/mise/installs/jj/*/jj.exe" | Select-Object -Last 1 -ExpandProperty FullName; & $jjBin log -r '@ | ynqlpylx | luoupqoy 
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T02:05:43Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: <project-dir>\.vendor\u1-pf\audit-conflict-before-resolution.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T02:07:40Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>\aidlc\spaces\default\intents\261004-pitchfork-continuation\construction\ci-review-followup.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T02:08:39Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>\aidlc\spaces\default\intents\261004-pitchfork-continuation\construction\ci-review-followup.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T02:08:41Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>\.vendor\u1-pf\pr-framework.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-06T02:08:56Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261004-pitchfork-continuation/construction/ci-review-followup.md
+**Context**: construction > ci-review-followup.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T02:09:04Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shell command: $ghBin = Get-ChildItem "$env:LOCALAPPDATA/mise/installs/gh/*/gh.exe","$env:LOCALAPPDATA/mise/installs/gh/*/bin/gh.exe","$env:LOCALAPPDATA/mise/installs/github-c
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T02:11:03Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shell command: $jjBin = Get-ChildItem "$env:LOCALAPPDATA/mise/installs/jj/*/jj.exe" | Select-Object -Last 1 -ExpandProperty FullName; $auditPath = 'aidlc/spaces/default/intent
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T02:16:17Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>\aidlc\spaces\default\intents\261004-pitchfork-continuation\construction\ci-review-followup.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T02:16:18Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Edit
+**Details**: <project-dir>\.vendor\u1-pf\pr-pitchfork.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-06T02:16:27Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/261004-pitchfork-continuation/construction/ci-review-followup.md
+**Context**: construction > ci-review-followup.md
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T02:16:33Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shell command: mise run markdown:check 2>&1 | Tee-Object .vendor/u1-pf/markdown-ci-followup-final.log; exit $LASTEXITCODE
+
+---
+
+## Guard Stood Aside
+**Timestamp**: 2026-10-06T02:18:05Z
+**Event**: GUARD_STOOD_ASIDE
+**Guard**: plan-approval
+**Authority**: grant
+**Grant**: turn-marker
+**Actor**: main
+**Stage**: code-generation
+**Tool**: Bash
+**Details**: shell command: $ghBin = Get-ChildItem "$env:LOCALAPPDATA/mise/installs/gh/*/gh.exe","$env:LOCALAPPDATA/mise/installs/gh/*/bin/gh.exe","$env:LOCALAPPDATA/mise/installs/github-c
+
+---

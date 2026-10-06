@@ -144,16 +144,6 @@ test('element reports the existing isolation error', async ({ page }) => {
 test('same-origin iframe works across browsers and rejects wrong source/origin', async ({
   page,
 }) => {
-  await page.route(`${SITE}/pitchfork-iframe.html`, (route) =>
-    route.fulfill({
-      path: resolve('e2e/host/pitchfork-iframe.html'),
-      contentType: 'text/html',
-      headers: {
-        'cross-origin-opener-policy': 'same-origin',
-        'cross-origin-embedder-policy': 'require-corp',
-      },
-    }),
-  );
   await page.goto(`${SITE}/pitchfork-iframe.html`);
   await expect
     .poll(() => page.evaluate(() => messages.map((message) => message.type)))

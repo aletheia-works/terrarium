@@ -24,28 +24,59 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Cache the fixed pitchfork build
+        id: pitchfork
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/out/
+          key: pitchfork-${{ runner.os }}-cfdea79f1d52b8449c0b99b29a03d9e771cd8ec3-${{ env.EMSDK_VERSION }}-${{ hashFiles('patches/**', 'runtime/**', 'scripts/**', '.github/workflows/test-e2e.yml') }}
       - name: Install Ninja
+        if: steps.pitchfork.outputs.cache-hit != 'true'
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ninja-build
       - name: Cache emsdk
+        if: steps.pitchfork.outputs.cache-hit != 'true'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.EMSDK }}
           key: emsdk-${{ runner.os }}-${{ env.EMSDK_VERSION }}
       - name: Install emsdk
+        if: steps.pitchfork.outputs.cache-hit != 'true'
         run: |
           [ -d "$EMSDK" ] || git clone --depth 1 https://github.com/emscripten-core/emsdk "$EMSDK"
           "$EMSDK/emsdk" install "$EMSDK_VERSION"
           "$EMSDK/emsdk" activate "$EMSDK_VERSION"
       - name: Install the Rust toolchain
+        if: steps.pitchfork.outputs.cache-hit != 'true'
         run: |
           toolchain=$(basename patches/toolchain/rust-std-*.patch .patch)
           rustup toolchain install "${toolchain#rust-std-}" --profile minimal --component rust-src --target wasm32-unknown-emscripten
       - name: Download the fixed pitchfork source
+        if: steps.pitchfork.outputs.cache-hit != 'true'
         run: |
           mkdir -p ../src
           curl -fsSL https://codeload.github.com/jdx/pitchfork/tar.gz/cfdea79f1d52b8449c0b99b29a03d9e771cd8ec3 | tar -xz -C ../src --strip-components=1
+      - name: Restore cargo cache
+        if: steps.pitchfork.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ${{ env.CARGO_TARGET_DIR }}
+          key: cargo-pitchfork-${{ runner.os }}-${{ hashFiles('patches/**') }}-cfdea79f1d52b8449c0b99b29a03d9e771cd8ec3
+          restore-keys: cargo-pitchfork-${{ runner.os }}-${{ hashFiles('patches/**') }}-
       - name: Build
+        if: steps.pitchfork.outputs.cache-hit != 'true'
         run: scripts/build-pitchfork.sh ../src "$RUNNER_TEMP/out"
+      - name: Save cargo cache
+        if: always() && steps.pitchfork.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ${{ env.CARGO_TARGET_DIR }}
+          key: cargo-pitchfork-${{ runner.os }}-${{ hashFiles('patches/**') }}-cfdea79f1d52b8449c0b99b29a03d9e771cd8ec3-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Check the build artifacts
+        run: test -s "$RUNNER_TEMP/out/pitchfork.js" && test -s "$RUNNER_TEMP/out/pitchfork.wasm"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: pitchfork-v2.29.0

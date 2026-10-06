@@ -57,3 +57,17 @@ run 37400717391は全ジョブsuccessだが、ビルドログのSDK/Cargoキャ�
 最新ローカル全単体の41pass/1failとEBUSYは保存する。cleanupは元のエラーを隠さない形に直し、単独テストは合格したが、元の失敗原因とCPU負荷の因果は未検証。Linux全単体42passを、Windowsの因果関係を証明したものとは扱わない。
 
 `aidlc-state.md`は`code-generation / Running`のまま保持する。通常CIの合格は、停止したAI-DLC記録コマンドが直ったという意味ではない。
+
+## 残ったAIレビュー指摘の追跡（2026-10-06）
+
+ユーザーの「未検証とか対応出来そうなものは対応して下さい」に従って通常レビュー・CI検証を継続した。
+
+- 本体head `dbc46f7c1a9dc4452a7666d7367a2b056efa1736`で、成果物キャッシュの入力を`patches/**`、`runtime/syscalls.c`、`runtime/libterrarium.js`、`scripts/build-pitchfork.sh`、`scripts/emscripten-env.sh`、`scripts/patch-rust-src.sh`、`scripts/vendor-patched.sh`、E2E workflowへ限定した。無関係なfetch・staging・lintスクリプトを外した。ドキュメント根拠: `build-pitchfork.sh:21,22,31`の呼出しと`emscripten-env.sh:37,38`のリンカー入力。パッチ・ツールチェーン・SDK・workflow設定の変更による無効化は保持する。
+- 検証済み: `mise run actions:check`がexit0（`.vendor/u1-pf/actions-cache-inputs-check.log`）。[最新AIレビュー](https://github.com/aletheia-works/terrarium/pull/21#issuecomment-6008676596)はblockingなし。
+- 検証済み: `gh api repos/jdx/pitchfork/commits/v2.29.0 --jq .sha`は`cfdea79f1d52b8449c0b99b29a03d9e771cd8ec3`を返した。タグとE2Eの固定コミットは今回の観測で一致する。
+- 検証済み: 修正済み本体のWindows上で`bun run test`が42pass、0fail、139assertions、exit0（`.vendor/u1-pf/unit-review-followup-windows-corrected.log`）。vendor失敗・再試行のテストを含めて合格し、今回EBUSYは再現しなかった。最初の`bun test`はPlaywrightのE2Eまで収集して2errorsになったため、全単体の合格根拠には用いない。
+- 未検証: 過去のEBUSYでディレクトリをロックしたプロセスとCPU負荷の因果。当時のロック保持者はログにない。今回の合格を過去の原因確定とは扱わず、追加のコード修正は行わない。
+- ドキュメント根拠: `fetch-builds.sh`のaube専用処理は現行aube E2Eの用途。pitchforkは専用ビルド成果物をstageするため、このスクリプトの一般化は今回の不具合修正には不要。[最新AIレビュー](https://github.com/aletheia-works/terrarium/pull/21#issuecomment-6008676596)も将来の観察事項としている。
+- PR #20の取り込み順序は維持する。PR #21を先に取り込むまでDraftとし、旧方針との整合性を単独ブランチで解決済みとは主張しない。
+- 検証済み: head `dbc46f7c1a9dc4452a7666d7367a2b056efa1736`のlint [37408677936](https://github.com/aletheia-works/terrarium/actions/runs/37408677936)、package [37408677953](https://github.com/aletheia-works/terrarium/actions/runs/37408677953)、E2E [37408677963 attempt 1](https://github.com/aletheia-works/terrarium/actions/runs/37408677963/attempts/1)はすべてsuccess。E2Eは34passed、既存2skipped。buildログはSDKとCargoの`Cache restored successfully`、新しいJS/Wasmキーの`Cache saved with key`を記録した。
+- 検証済み: `gh run rerun 37408677963 --job 112091938892`で同じhead・同じキャッシュキーを再実行した。[attempt 2のbuild job 112094056992](https://github.com/aletheia-works/terrarium/actions/runs/37408677963/job/112094056992)はsuccess。`gh run view 37408677963 --json attempt,jobs`の応答はattempt 2、`Cache the fixed pitchfork build: success`、`Build: skipped`、`Check the build artifacts: success`。キャッシュhitによるビルド省略と復元成果物の存在確認を実観測した。PR用キャッシュの検証であり、mainへマージした後のキャッシュ共有まで証明したとは扱わない。

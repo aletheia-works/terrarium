@@ -31,7 +31,9 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ runner.temp }}/out/
-          key: pitchfork-${{ runner.os }}-cfdea79f1d52b8449c0b99b29a03d9e771cd8ec3-${{ env.EMSDK_VERSION }}-${{ hashFiles('patches/**', 'runtime/**', 'scripts/**', '.github/workflows/test-e2e.yml') }}
+          # Include the build's script dependencies and linker inputs; unrelated
+          # fetch, staging and lint scripts do not change the compiled artifact.
+          key: pitchfork-${{ runner.os }}-cfdea79f1d52b8449c0b99b29a03d9e771cd8ec3-${{ env.EMSDK_VERSION }}-${{ hashFiles('patches/**', 'runtime/syscalls.c', 'runtime/libterrarium.js', 'scripts/build-pitchfork.sh', 'scripts/emscripten-env.sh', 'scripts/patch-rust-src.sh', 'scripts/vendor-patched.sh', '.github/workflows/test-e2e.yml') }}
       - name: Install Ninja
         if: steps.pitchfork.outputs.cache-hit != 'true'
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ninja-build

@@ -167,18 +167,7 @@ test('a supplied archive with a different compressed digest is refused before pl
   );
 });
 
-test('the CI archive is pinned to an immutable commit and matches the verified fixed inputs', async () => {
-  const descriptor = JSON.parse(
-    await readFile(
-      new URL('../../../integration/formicarium-inputs.json', import.meta.url),
-      'utf8',
-    ),
-  );
-  expect(descriptor.distribution.commit).toMatch(/^[a-f0-9]{40}$/);
-  expect(descriptor.distribution.url).toBe(
-    `https://raw.githubusercontent.com/Marukome0743/terrarium/${descriptor.distribution.commit}/inputs.tar.gz`,
-  );
-  expect(descriptor.distribution.archiveSha256).toMatch(/^[a-f0-9]{64}$/);
+test('four workflows require an explicit input URL and reject missing supply before installation', async () => {
   for (const name of [
     'test-terrarium.yml',
     'test-e2e.yml',
@@ -189,11 +178,76 @@ test('the CI archive is pinned to an immutable commit and matches the verified f
       new URL(`../../../.github/workflows/${name}`, import.meta.url),
       'utf8',
     );
-    expect(source).toContain(
-      `vars.FORMICARIUM_INPUTS_URL || '${descriptor.distribution.url}'`,
+    expect(source).toMatch(
+      /FORMICARIUM_INPUTS_URL: \$\{\{ vars\.FORMICARIUM_INPUTS_URL \}\}/,
+    );
+    expect(source).not.toContain('vars.FORMICARIUM_INPUTS_URL ||');
+    const guard = source
+      .split('\n')
+      .find((line) => line.includes('FORMICARIUM_INPUTS_URL:?'))
+      ?.trim();
+    expect(guard).toBeDefined();
+    const env = { ...process.env };
+    delete env.FORMICARIUM_INPUTS_URL;
+    for (const value of [
+      undefined,
+      '',
+      'https://inputs.invalid/fixed.tar.gz',
+    ]) {
+      const supplied =
+        value === undefined ? env : { ...env, FORMICARIUM_INPUTS_URL: value };
+      const result = Bun.spawnSync(
+        ['bash', '-c', `${guard}\nprintf 'supply-accepted'`],
+        { env: supplied },
+      );
+      if (value) {
+        expect(result.exitCode).toBe(0);
+        expect(result.stdout.toString()).toBe('supply-accepted');
+      } else {
+        expect(result.exitCode).not.toBe(0);
+        expect(result.stderr.toString()).toContain(
+          'Configure the fixed formicarium input archive URL',
+        );
+        expect(result.stdout.toString()).toBe('');
+      }
+    }
+    expect(source.indexOf('FORMICARIUM_INPUTS_URL:?')).toBeLessThan(
+      source.indexOf('prepare-formicarium.mjs --url'),
     );
   }
 });
+
+test('the current sixteen-file explicit supply is accepted and changed resolver bytes are refused', async () => {
+  const f = await fixture();
+  const from =
+    process.env.FORMICARIUM_INPUTS_ROOT ??
+    path.resolve(import.meta.dir, '../../../.vendor/formicarium-inputs');
+  const accepted = await prepareInputs({ from, output: f.output });
+  expect(accepted.files).toHaveLength(16);
+  await writeFile(
+    path.join(f.output, 'resolver/resolver.js'),
+    'changed resolver',
+  );
+  await expect(
+    prepareInputs({ from: f.output, output: path.join(f.root, 'second') }),
+  ).rejects.toThrow('digest mismatch: resolver/resolver.js');
+  await expect(
+    readFile(path.join(f.root, 'second', 'resolver/resolver.js')),
+  ).rejects.toMatchObject({ code: 'ENOENT' });
+});
+
+test('old resolver-extension archive is rejected by the current exact sixteen-file contract', async () => {
+  const f = await fixture();
+  const archive = path.join(f.root, 'old-inputs.tar.gz');
+  await writeFile(archive, tar('resolver/resolver.mjs'));
+  await expect(prepareInputs({ archive, output: f.output })).rejects.toThrow(
+    'exact input file set differs',
+  );
+  await expect(
+    readFile(path.join(f.output, 'resolver/resolver.mjs')),
+  ).rejects.toMatchObject({ code: 'ENOENT' });
+});
+
 test('CI verifies fixed inputs before install and retains separate three-browser suites', async () => {
   for (const name of [
     'test-terrarium.yml',

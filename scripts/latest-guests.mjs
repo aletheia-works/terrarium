@@ -205,6 +205,8 @@ export function releaseBinary(archive, tool, asset) {
 }
 
 async function buildLatest(resolutions, destination, resolverRoot) {
+  // Setup installs build tools explicitly; never install unrelated project tools.
+  process.env.MISE_AUTO_INSTALL = '0';
   for (const [tool, resolved] of Object.entries(resolutions.tools)) {
     if (!resolved.releaseAsset && !['aube', 'pitchfork'].includes(tool))
       throw new Error(`no native guest builder: ${tool}`);
@@ -278,7 +280,7 @@ async function buildLatest(resolutions, destination, resolverRoot) {
       ]);
       validateGuestElf(await readFile(path.join(destination, tool)));
       info.provenanceKind = 'source-build';
-      info.rustc = execFileSync('mise', ['exec', '--', 'rustc', '--version'], {
+      info.rustc = execFileSync('mise', ['exec', 'rust', '--', 'rustc', '--version'], {
         cwd: root,
         encoding: 'utf8',
       }).trim();

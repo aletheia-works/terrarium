@@ -16,6 +16,11 @@ v2.30.1 only publishes a dynamically linked glibc Linux binary, so terrarium
 compiles the resolved upstream commit to static musl without local patches.
 Its UI uses the official aube binary and Node 24.21.0. Cargo and rustc come from
 terrarium's pinned mise installation, bypassing upstream contributor wrappers.
+Build-time mise executions name Rust or Node explicitly and disable automatic
+installation (`MISE_AUTO_INSTALL=0`). The setup step installs bun/node/rust, and
+the UI Node version is installed explicitly. This prevents compiler discovery
+from installing unrelated lint/OpenTofu tools or consuming anonymous GitHub API
+quota. Latest release resolution still uses the authenticated `GH_TOKEN` step.
 The musl ioctl fix is already upstream; no obsolete patch is needed.
 
 Before publishing the guest catalogue, the workflow executes each guest's

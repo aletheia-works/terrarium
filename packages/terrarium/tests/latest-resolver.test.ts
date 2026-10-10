@@ -22,6 +22,10 @@ async function resolve(corruption?: 'guest' | 'patch') {
     path.join(root, 'scripts/latest-guest-resolver.mjs'),
     path.join(directory, 'latest-resolver.mjs'),
   );
+  await cp(
+    path.join(root, 'scripts/latest-manifest.mjs'),
+    path.join(directory, 'latest-manifest.js'),
+  );
   const guest = new Uint8Array(120);
   guest.set([127, 69, 76, 70, 2, 1, 1]);
   const header = new DataView(guest.buffer);

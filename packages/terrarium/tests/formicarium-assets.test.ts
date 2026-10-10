@@ -169,7 +169,7 @@ async function fixture(realRepositories = false) {
 }
 
 describe('candidate assets staging', () => {
-  test('valid old guest assets are refused before changing an existing latest candidate', async () => {
+  test('old catalogues missing a registered tool are refused before changing a latest candidate', async () => {
     const input = await fixture(true);
     await save(
       path.join(input.guestSite, 'tools.json'),
@@ -198,7 +198,7 @@ describe('candidate assets staging', () => {
     };
     await expect(
       stageFormicarium({ ...input, latestResolutions }),
-    ).rejects.toThrow('latest source mismatch');
+    ).rejects.toThrow('latest tool coverage mismatch');
     expect(await readFile(path.join(input.webRoot, 'sentinel'), 'utf8')).toBe(
       'previous site',
     );

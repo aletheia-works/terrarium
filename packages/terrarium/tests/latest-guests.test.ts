@@ -180,3 +180,28 @@ test('official companion symlinks are omitted, never used as the guest', () => {
     'expected one release executable',
   );
 });
+
+test('Biome resolves its scoped release tag and verified standalone musl binary', async () => {
+  const bytes = Buffer.from('official binary');
+  const asset = {
+    name: 'biome-linux-x64-musl',
+    browser_download_url:
+      'https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.15/biome-linux-x64-musl',
+    digest: `sha256:${createHash('sha256').update(bytes).digest('hex')}`,
+    size: bytes.length,
+  };
+  const result = await resolveLatest(
+    { biome: { repository: 'https://github.com/biomejs/biome' } },
+    async (endpoint: string) =>
+      endpoint.endsWith('/releases/latest')
+        ? { tag_name: '@biomejs/biome@2.5.15', assets: [asset] }
+        : { sha: commit },
+  );
+  const resolved = result.tools.biome!;
+  expect(resolved.ref).toBe('@biomejs/biome@2.5.15');
+  expect(resolved.releaseAsset?.format).toBe('binary');
+  expect(releaseBinary(bytes, 'biome', resolved.releaseAsset!)).toEqual(bytes);
+  expect(() =>
+    releaseBinary(Buffer.from('tampered'), 'biome', resolved.releaseAsset!),
+  ).toThrow('digest/size mismatch');
+});

@@ -8,6 +8,7 @@ import {
 } from './candidate-transaction.mjs';
 import { validateUnmodifiedProvenance } from './latest-guest-resolver.mjs';
 import { validateLatest } from './latest-guests.mjs';
+import { validateBuild as validateLatestBuild } from './latest-manifest.mjs';
 import { INPUT_ROOT, verifyInputs } from './prepare-formicarium.mjs';
 import {
   RC_NAME,
@@ -148,7 +149,9 @@ async function guestInputs(guestSite, resolverRoot) {
     if (!tools[tool] || !manifest.builds?.[tool]?.[tools[tool].default])
       throw new Error(`missing default build: ${tool}`);
     for (const [ref, build] of Object.entries(manifest.builds[tool])) {
-      validateBuild(build, { tool, ref, base: boundary });
+      (build.source?.type === 'git-unmodified'
+        ? validateLatestBuild
+        : validateBuild)(build, { tool, ref, base: boundary });
       const assets = [
         build.guest,
         build.buildInfo,
@@ -176,12 +179,20 @@ async function guestInputs(guestSite, resolverRoot) {
             entry.relative.endsWith('/latest-resolver.js'),
           )
         )
-          modules.push({
-            relative: 'formicarium-guest-distribution/latest-resolver.js',
-            bytes: await readFile(
-              new URL('./latest-guest-resolver.mjs', import.meta.url),
-            ),
-          });
+          modules.push(
+            {
+              relative: 'formicarium-guest-distribution/latest-manifest.js',
+              bytes: await readFile(
+                new URL('./latest-manifest.mjs', import.meta.url),
+              ),
+            },
+            {
+              relative: 'formicarium-guest-distribution/latest-resolver.js',
+              bytes: await readFile(
+                new URL('./latest-guest-resolver.mjs', import.meta.url),
+              ),
+            },
+          );
       } else validateProvenance(info, build);
     }
   }

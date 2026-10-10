@@ -23,16 +23,16 @@ start faster and ship smaller than a general one.
 ## Status
 
 The tools are [aube](https://github.com/aubepkg/aube), a Node.js package
-manager written in Rust, and [pitchfork](https://github.com/jdx/pitchfork)
-v2.29.0. aube runs an offline `install` with local (`file:` / `link:`)
-dependencies. pitchfork supports the commands that need no supervisor:
-version, daemon configuration and status, and settings.
+manager written in Rust, [pitchfork](https://github.com/jdx/pitchfork), and
+[Biome](https://github.com/biomejs/biome), a formatter and linter. aube runs an
+offline install with local dependencies. pitchfork supports commands that need
+no supervisor. Biome formats and lints the preloaded JavaScript files.
 
-aube builds for `wasm32-unknown-emscripten` without changes to its own
-code; pitchfork uses the patch in `patches/tools/`. The browser terminal
-is at <https://aletheia-works.github.io/terrarium/>. GitHub Actions checks
-each tool's default ref daily (`main` for aube, `v2.29.0` for pitchfork),
-and builds branches, tags, commits or pull requests on demand.
+The public site uses the latest stable releases, verified in Node and all three
+browsers before deployment. aube and Biome use official static musl binaries;
+pitchfork builds unmodified upstream source. See
+[integration/latest-tool-builds.md](integration/latest-tool-builds.md).
+The browser terminal is at <https://aletheia-works.github.io/terrarium/>.
 
 Showing a bug next to its fix is [Vivarium](https://github.com/aletheia-works/vivarium)'s
 job, not terrarium's: Vivarium embeds two terrarium terminals, one per build.
@@ -44,11 +44,11 @@ page, or the page in an iframe. All three take the same settings:
 
 | Setting | Meaning | Default |
 | ------- | ------- | ------- |
-| `ref` | the build: `main`, a tag such as `v2.6.1`, `pr-<number>`, or a commit's first 12 characters | the tool's default: `main` for aube, `v2.29.0` for pitchfork |
+| `ref` | the build: `main`, a tag such as `v2.6.1`, `pr-<number>`, or a commit's first 12 characters | the tool's default: latest stable release |
 | `run` | commands to type once the terminal is ready | none |
-| `fixture` | the sample project preloaded into `/work`; empty for none | `aube-local-deps` for aube, `pitchfork-basic` for pitchfork |
+| `fixture` | the sample project preloaded into `/work`; empty for none | `aube-local-deps`, `pitchfork-basic`, or `biome-basic` |
 | `cwd` | the starting directory | the tool's default, or `/work` without a fixture |
-| `tool` | the CLI: `aube` or `pitchfork` | `aube` |
+| `tool` | the CLI: `aube`, `pitchfork`, or `biome` | `aube` |
 
 The published builds are listed in
 [`web/dist/builds.json`](https://aletheia-works.github.io/terrarium/web/dist/builds.json).
@@ -127,3 +127,18 @@ questions.
 ## License
 
 Apache License 2.0
+
+## Biome
+
+Open `?tool=biome` to preload a small JavaScript project. Try:
+
+```sh
+biome --version
+biome format --write example.js
+cat example.js
+biome lint lint.js
+```
+
+`lint.js` deliberately contains a debugger statement, so its lint command exits
+with diagnostics. Files stay in the session between commands. Use the CLI
+directly; daemon and language-server processes are outside this terminal's scope.

@@ -80,13 +80,13 @@ Commands: `node scripts/check-latest-guests.mjs .vendor/site-latest` and
 and bun paths explicitly set. The PR's latest-guests workflow additionally
 checks the fresh Linux source build before accepting its catalogue.
 
-## Legacy E2E fixture
+## Emscripten E2E inputs
 
-Legacy Emscripten E2E keeps aube v2.6.1 at source commit
-`bd94e42f54d3b5e3dd102716b7197f316cb5f4ed`. The `aube-build` job builds that
-source with this PR's runtime, patches and toolchain, and caches the JS/Wasm by
-source commit and build inputs. Every browser downloads its same-run artifact;
-a cache miss triggers a build rather than fetching the production catalogue.
-The page/element/iframe and fixture/event regressions keep their fixed version
-expectations. New aube releases require no edits to this baseline. Latest aube
-and pitchfork remain covered independently by the native latest-guests workflow.
+Emscripten E2E resolves the latest stable aube and pitchfork tags and commits once
+per run, builds those source commits with the PR's runtime/patches/toolchain,
+and shares same-run artifacts across all three browsers. Cache keys include
+source commits and build inputs; cache misses rebuild rather than fetching the
+production Pages catalogue. Tests retain page/element/iframe, fixture, event
+and tool-switch behavior assertions, while version/source expectations come
+from the resolved identities. New releases need no hardcoded test version edits.
+Native latest-guests acceptance remains independent and covers production guests.

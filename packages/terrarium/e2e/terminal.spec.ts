@@ -1,7 +1,13 @@
 // The three ways in — the page, the element, the iframe — against the
-// v2.6.1 build of aube and the aube-local-deps fixture.
+// resolved aube build and the aube-local-deps fixture.
 import { expect, type Page, test } from '@playwright/test';
-import { HOST, SITE } from '../playwright.config.ts';
+import {
+  AUBE_COMMIT,
+  AUBE_REF,
+  AUBE_VERSION,
+  HOST,
+  SITE,
+} from '../playwright.config.ts';
 
 declare global {
   var terrariumTranscript: string;
@@ -18,18 +24,18 @@ test.describe('the page', () => {
     page,
   }) => {
     await page.goto(
-      `${SITE}/web/?ref=v2.6.1&run=aube%20--version&run=aube%20install&run=ls&run=aube%20list`,
+      `${SITE}/web/?ref=${AUBE_REF}&run=aube%20--version&run=aube%20install&run=ls&run=aube%20list`,
     );
-    await expect(page.locator('#build')).toHaveValue('v2.6.1');
+    await expect(page.locator('#build')).toHaveValue(AUBE_REF);
     await expect(page.locator('#source')).toHaveAttribute(
       'href',
-      /aubepkg\/aube\/commit\/bd94e42f/,
+      `https://github.com/aubepkg/aube/commit/${AUBE_COMMIT}`,
     );
     await expect
       .poll(() => transcript(page))
       .toContain('dependencies:\n├── filedep');
     const text = await transcript(page);
-    expect(text).toContain('2.6.1');
+    expect(text).toContain(AUBE_VERSION);
     expect(text).toMatch(/node_modules\//);
     expect(text).toContain('linked');
     await expect(page.locator('#status')).toHaveText(/^Ready in /);
@@ -40,14 +46,14 @@ test.describe('the page', () => {
   }) => {
     await page.goto(`${SITE}/web/?ref=nope`);
     await expect(page.locator('#status')).toHaveText(
-      /no build "nope" of aube; published: .*v2\.6\.1/,
+      `no build "nope" of aube; published: ${AUBE_REF}`,
     );
   });
 
   test('starts in /work with no fixture when ?fixture is empty', async ({
     page,
   }) => {
-    await page.goto(`${SITE}/web/?ref=v2.6.1&fixture=&run=pwd&run=ls`);
+    await page.goto(`${SITE}/web/?ref=${AUBE_REF}&fixture=&run=pwd&run=ls`);
     await expect.poll(() => transcript(page)).toBe('/work\n');
   });
 });
@@ -60,15 +66,15 @@ test.describe('the element on another origin', () => {
     );
     expect(ready).toMatchObject({
       tool: 'aube',
-      ref: 'v2.6.1',
-      commit: expect.stringMatching(/^bd94e42f/),
+      ref: AUBE_REF,
+      commit: AUBE_COMMIT,
     });
 
     const result = await page.evaluate(() =>
       document.querySelector('terrarium-terminal')?.run('aube --version'),
     );
     expect(result).toMatchObject({ command: 'aube --version', code: 0 });
-    expect(result?.output).toContain('2.6.1');
+    expect(result?.output).toContain(AUBE_VERSION);
 
     const missing = await page.evaluate(() =>
       document.querySelector('terrarium-terminal')?.run('cat nope'),
@@ -121,7 +127,7 @@ test.describe('the iframe on another origin', () => {
         origin: SITE,
         command: 'aube --version',
         code: 0,
-        output: expect.stringContaining('2.6.1'),
+        output: expect.stringContaining(AUBE_VERSION),
       });
   });
 });

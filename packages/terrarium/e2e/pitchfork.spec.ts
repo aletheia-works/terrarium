@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, type Page, test } from '@playwright/test';
-import { HOST, SITE } from '../playwright.config.ts';
+import { AUBE_VERSION, HOST, SITE } from '../playwright.config.ts';
 
 const pitchforkRef =
   process.env.TERRARIUM_PITCHFORK_REF ??
@@ -93,7 +93,7 @@ test('tool switch clears pitchfork ref, fixture, cwd and queued commands', async
     document.querySelector('terrarium-terminal')?.run('aube --version'),
   );
   expect(version).toMatchObject({ code: 0 });
-  expect(version?.output).toContain('2.6.1');
+  expect(version?.output).toContain(AUBE_VERSION);
 });
 
 test('unknown tool and pitchfork ref fail without falling back', async ({

@@ -33,6 +33,27 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: bash scripts/resolve-ref.sh pitchfork latest >> "$GITHUB_OUTPUT"
 
+  aube-ref:
+    name: Resolve latest stable aube
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      ref: ${{ steps.aube-ref.outputs.name }}
+      commit: ${{ steps.aube-ref.outputs.commit }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Setup mise (jq)
+        uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        with:
+          install_args: jq
+      - name: Resolve latest stable aube once
+        id: aube-ref
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/resolve-ref.sh aube latest >> "$GITHUB_OUTPUT"
+
   pitchfork-build:
     needs: pitchfork-ref
     name: Build latest stable pitchfork
@@ -113,31 +134,26 @@ jobs:
           retention-days: 7
 
   aube-build:
-    name: Build fixed legacy aube
+    needs: aube-ref
+    name: Build latest stable aube
     outputs:
-      ref: ${{ steps.identity.outputs.ref }}
-      commit: ${{ steps.identity.outputs.commit }}
+      ref: ${{ needs.aube-ref.outputs.ref }}
+      commit: ${{ needs.aube-ref.outputs.commit }}
     runs-on: ubuntu-latest
     timeout-minutes: 240
     env:
-      # Fixed regression input; latest aube is exercised by latest / guests.
-      AUBE_REF: "v2.6.1"
-      AUBE_COMMIT: "bd94e42f54d3b5e3dd102716b7197f316cb5f4ed"
+      AUBE_REF: ${{ needs.aube-ref.outputs.ref }}
+      AUBE_COMMIT: ${{ needs.aube-ref.outputs.commit }}
       EMSDK_VERSION: "6.0.10"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Record the fixed regression source
-        id: identity
-        run: |
-          echo "ref=$AUBE_REF" >> "$GITHUB_OUTPUT"
-          echo "commit=$AUBE_COMMIT" >> "$GITHUB_OUTPUT"
       - name: Set cache-compatible build directories
         run: |
           echo "EMSDK=$RUNNER_TEMP/emsdk" >> "$GITHUB_ENV"
           echo "CARGO_TARGET_DIR=$RUNNER_TEMP/aube-target" >> "$GITHUB_ENV"
-      - name: Cache the fixed aube build
+      - name: Cache the resolved aube build
         id: aube
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -165,7 +181,7 @@ jobs:
         run: |
           toolchain=$(basename patches/toolchain/rust-std-*.patch .patch)
           rustup toolchain install "${toolchain#rust-std-}" --profile minimal --component rust-src --target wasm32-unknown-emscripten
-      - name: Download the fixed aube source
+      - name: Download the resolved aube source
         if: steps.aube.outputs.cache-hit != 'true'
         run: |
           mkdir -p ../src
@@ -204,6 +220,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
+      TERRARIUM_AUBE_REF: ${{ needs.aube-build.outputs.ref }}
+      TERRARIUM_AUBE_COMMIT: ${{ needs.aube-build.outputs.commit }}
       TERRARIUM_PITCHFORK_REF: ${{ needs.pitchfork-build.outputs.ref }}
       TERRARIUM_PITCHFORK_COMMIT: ${{ needs.pitchfork-build.outputs.commit }}
     strategy:
@@ -246,8 +264,7 @@ jobs:
           name: aube-${{ needs.aube-build.outputs.ref }}
           path: ${{ runner.temp }}/aube
 
-      # Keep the fixed aube regression while building against this PR's runtime.
-      # Production releases are independently covered by latest / guests.
+      # Both tools use resolved latest source and artifacts from this run.
       - name: Stage the same-run legacy builds and assemble the sites
         env:
           AUBE_REF: ${{ needs.aube-build.outputs.ref }}

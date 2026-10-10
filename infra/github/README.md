@@ -16,6 +16,12 @@ The repository and the labels created by hand before this module are adopted
 by `import` blocks in `main.tf`, so the first apply starts from an empty state
 without a seed.
 
+The main ruleset requires `latest / guests` from GitHub Actions alongside
+the existing lint, package and three-browser E2E checks. This is the check-run
+name emitted by `test-latest-guests.yml` calling `build-latest-guests.yml`; it
+covers release acquisition, native builds, Node execution and all three browsers.
+Keep this context in sync if those workflow job names change.
+
 ## CI workflows
 
 | Trigger | Workflow | Action |

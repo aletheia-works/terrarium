@@ -79,3 +79,11 @@ Commands: `node scripts/check-latest-guests.mjs .vendor/site-latest` and
 `playwright test --config playwright.latest.config.ts` with the candidate site
 and bun paths explicitly set. The PR's latest-guests workflow additionally
 checks the fresh Linux source build before accepting its catalogue.
+
+## Legacy E2E fixture
+
+Legacy Emscripten E2E uses aube v2.6.1 from the builds snapshot
+`9505321ff2401d5d4942b26e344e5a587a63de58`, selected with
+`TERRARIUM_BUILDS_BASE`. Its manifest and JS/Wasm come from the same immutable
+snapshot. This keeps historical runtime regression coverage independent of
+the production Pages catalogue, which now serves latest native guests.

@@ -155,10 +155,13 @@ jobs:
           name: pitchfork-${{ needs.pitchfork-build.outputs.ref }}
           path: ${{ runner.temp }}/pitchfork
 
-      # The tests run the published v2.6.1 build of aube, a tag that never
+      # The tests run an archived v2.6.1 Emscripten build of aube, a tag that never
       # moves, against this pull request's page, element, Session and
       # fixtures (staged into web/dist/fixtures by stage-web.sh).
-      - name: Fetch the v2.6.1 build and assemble the site
+      - name: Fetch the fixed v2.6.1 archive and assemble the site
+        env:
+          # Pin the builds snapshot: production Pages now contains native guests.
+          TERRARIUM_BUILDS_BASE: https://raw.githubusercontent.com/aletheia-works/terrarium/9505321ff2401d5d4942b26e344e5a587a63de58
         run: |
           bash scripts/fetch-builds.sh v2.6.1
           TERRARIUM_PITCHFORK_BUILD="$RUNNER_TEMP/pitchfork" bash scripts/prepare-pitchfork-e2e.sh

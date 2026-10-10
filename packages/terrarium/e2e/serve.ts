@@ -33,7 +33,15 @@ Bun.serve({
       headers['cross-origin-opener-policy'] = 'same-origin';
       headers['cross-origin-embedder-policy'] = 'require-corp';
     }
-    return new Response(body, { headers });
+    if (path.endsWith('.html'))
+      headers['content-type'] = 'text/html; charset=utf-8';
+    const contents = path.endsWith('.html')
+      ? (await body.text()).replaceAll(
+          '__AUBE_REF__',
+          process.env.TERRARIUM_AUBE_REF ?? '',
+        )
+      : body;
+    return new Response(contents, { headers });
   },
 });
 console.log(`serving ${root} on http://localhost:${port}/`);

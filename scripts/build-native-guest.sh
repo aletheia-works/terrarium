@@ -9,7 +9,7 @@ target=x86_64-unknown-linux-musl
 export CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER=musl-gcc
 export CC_x86_64_unknown_linux_musl=musl-gcc
 export CARGO_TARGET_DIR=${CARGO_TARGET_DIR:-$out/cargo}
-cargo_bin=$(cd "$root" && mise exec -- rustup which cargo)
+cargo_bin=$(cd "$root" && MISE_AUTO_INSTALL=0 mise exec rust -- rustup which cargo)
 rust_bin=$(dirname "$cargo_bin")
 export RUSTC="$rust_bin/rustc"
 export PATH="$rust_bin:$PATH"

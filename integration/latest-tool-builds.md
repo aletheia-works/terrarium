@@ -16,6 +16,11 @@ v2.30.1 only publishes a dynamically linked glibc Linux binary, so terrarium
 compiles the resolved upstream commit to static musl without local patches.
 Its UI uses the official aube binary and Node 24.21.0. Cargo and rustc come from
 terrarium's pinned mise installation, bypassing upstream contributor wrappers.
+Build-time mise executions name Rust or Node explicitly and disable automatic
+installation (`MISE_AUTO_INSTALL=0`). The setup step installs bun/node/rust, and
+the UI Node version is installed explicitly. This prevents compiler discovery
+from installing unrelated lint/OpenTofu tools or consuming anonymous GitHub API
+quota. Latest release resolution still uses the authenticated `GH_TOKEN` step.
 The musl ioctl fix is already upstream; no obsolete patch is needed.
 
 Before publishing the guest catalogue, the workflow executes each guest's
@@ -74,3 +79,14 @@ Commands: `node scripts/check-latest-guests.mjs .vendor/site-latest` and
 `playwright test --config playwright.latest.config.ts` with the candidate site
 and bun paths explicitly set. The PR's latest-guests workflow additionally
 checks the fresh Linux source build before accepting its catalogue.
+
+## Emscripten E2E inputs
+
+Emscripten E2E resolves the latest stable aube and pitchfork tags and commits once
+per run, builds those source commits with the PR's runtime/patches/toolchain,
+and shares same-run artifacts across all three browsers. Cache keys include
+source commits and build inputs; cache misses rebuild rather than fetching the
+production Pages catalogue. Tests retain page/element/iframe, fixture, event
+and tool-switch behavior assertions, while version/source expectations come
+from the resolved identities. New releases need no hardcoded test version edits.
+Native latest-guests acceptance remains independent and covers production guests.

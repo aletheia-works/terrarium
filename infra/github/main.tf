@@ -57,6 +57,7 @@ locals {
     "E2E (chromium)",
     "E2E (firefox)",
     "E2E (webkit)",
+    "latest / guests",
   ]
 }
 

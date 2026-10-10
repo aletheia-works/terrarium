@@ -199,6 +199,9 @@ async function buildLatest(resolutions, destination) {
       rustc: execFileSync('rustc', ['--version'], { encoding: 'utf8' }).trim(),
     };
     if (tool === 'pitchfork') {
+      info.patch_state = (
+        await readFile(path.join(destination, 'pitchfork.patch-state'), 'utf8')
+      ).trim();
       info.patch_sha256 = hash(
         await readFile(
           path.join(root, 'patches/guests/pitchfork-musl-ioctl.patch'),

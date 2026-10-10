@@ -7,7 +7,8 @@ are `latest`; deployed defaults are concrete tags.
 The reusable `build-latest-guests.yml` workflow resolves each tag and full commit
 once, downloads the source archive for that commit, and compiles static musl
 x86-64 guests. Pitchfork's UI uses the freshly built aube and Node 24.21.0. Its
-musl patch is separate from the legacy Emscripten patches.
+musl patch is separate from the legacy Emscripten patches. Already incorporated
+upstream fixes are reverse-checked and recorded as `present-upstream`.
 
 Before publishing the guest catalogue, the workflow executes each guest's
 `--version` command in Node, Chromium, Firefox, and WebKit. Browser tests also
@@ -57,5 +58,6 @@ builds both resolved commits from source.
 
 Commands: `node scripts/check-latest-guests.mjs .vendor/site-latest` and
 `playwright test --config playwright.latest.config.ts` with the candidate site
-and bun paths explicitly set. Package CI passed 150 tests, type-check and build.
-`mise run lint:all` passed.
+and bun paths explicitly set. Package CI passed 151 tests, type-check and build.
+`mise run lint:all` passed. Existing three-browser suites passed: 34 legacy
+checks (two existing skips) and 45 fixed-RC checks.

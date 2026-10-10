@@ -201,6 +201,14 @@ export async function prepareFormicarium({
 }) {
   const runtime = await runtimeInputs(packageRoot, packageManifest);
   const guests = await guestInputs(guestSite, resolverRoot);
+  if (latestResolutions)
+    validateLatest(
+      guests.tools,
+      guests.manifest,
+      latestResolutions,
+      await json(new URL('../web/tools.json', import.meta.url)),
+    );
+
   const packageManifestSha256 = sha(await readFile(packageManifest));
   return {
     inputIdentity:
@@ -209,6 +217,7 @@ export async function prepareFormicarium({
         Buffer.from(
           JSON.stringify({
             packageManifestSha256,
+            latestResolutions,
             files: [...runtime.files, ...guests.modules, ...guests.files]
               .map(({ relative, bytes }) => ({
                 path: relative,
@@ -345,7 +354,7 @@ export async function explicitInputs() {
     validateLatest(
       await json(path.join(options.guestSite, 'tools.json')),
       await json(path.join(options.guestSite, 'dist/builds.json')),
-      await json(path.join(options.guestSite, 'latest-resolutions.json')),
+      options.latestResolutions,
       await json(path.join(root, 'web/tools.json')),
     );
   }

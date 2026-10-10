@@ -25,17 +25,6 @@ case "$tool" in
       aube run build
       test -f dist/index.html
     )
-    # The patch only changes the ioctl request cast to musl's inferred type.
-    guest_patch="$root/patches/guests/pitchfork-musl-ioctl.patch"
-    if patch --dry-run --batch --forward -p1 < "$guest_patch"; then
-      patch --batch --forward -p1 < "$guest_patch"
-      echo applied > "$out/pitchfork.patch-state"
-    elif patch --dry-run --batch --reverse -p1 < "$guest_patch"; then
-      echo present-upstream > "$out/pitchfork.patch-state"
-    else
-      echo 'musl ioctl patch matches neither source nor upstream fix' >&2
-      exit 1
-    fi
     cargo build --release --locked --target "$target" --bin pitchfork
     ;;
   *) echo "no native guest builder: $tool" >&2; exit 1 ;;

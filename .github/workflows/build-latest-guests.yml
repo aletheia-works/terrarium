@@ -26,7 +26,7 @@ jobs:
           path: |
             ~/.cargo/registry
             .vendor/native/cargo
-          key: native-musl-${{ runner.os }}-${{ hashFiles('mise.toml', 'scripts/build-native-guest.sh', 'patches/guests/**', '.vendor/native/resolutions.json') }}
+          key: native-musl-${{ runner.os }}-${{ hashFiles('mise.toml', 'scripts/build-native-guest.sh', '.vendor/native/resolutions.json') }}
           restore-keys: native-musl-${{ runner.os }}-
       - name: Build the resolved source commits
         run: node scripts/latest-guests.mjs build .vendor/native/resolutions.json .vendor/native

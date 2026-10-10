@@ -58,7 +58,7 @@ jobs:
           path: ${{ runner.temp }}/out/
           # Include the build's script dependencies and linker inputs; unrelated
           # fetch, staging and lint scripts do not change the compiled artifact.
-          key: pitchfork-${{ runner.os }}-${{ needs.pitchfork-ref.outputs.commit }}-${{ env.EMSDK_VERSION }}-${{ hashFiles('patches/**', '!patches/guests/**', 'runtime/syscalls.c', 'runtime/libterrarium.js', 'scripts/build-pitchfork.sh', 'scripts/emscripten-env.sh', 'scripts/patch-rust-src.sh', 'scripts/vendor-patched.sh') }}
+          key: pitchfork-${{ runner.os }}-${{ needs.pitchfork-ref.outputs.commit }}-${{ env.EMSDK_VERSION }}-${{ hashFiles('patches/**', 'runtime/syscalls.c', 'runtime/libterrarium.js', 'scripts/build-pitchfork.sh', 'scripts/emscripten-env.sh', 'scripts/patch-rust-src.sh', 'scripts/vendor-patched.sh') }}
       - name: Install Ninja
         if: steps.pitchfork.outputs.cache-hit != 'true'
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ninja-build
@@ -91,8 +91,8 @@ jobs:
           path: |
             ~/.cargo/registry
             ${{ env.CARGO_TARGET_DIR }}
-          key: cargo-pitchfork-${{ runner.os }}-${{ hashFiles('patches/**', '!patches/guests/**') }}-${{ needs.pitchfork-ref.outputs.commit }}
-          restore-keys: cargo-pitchfork-${{ runner.os }}-${{ hashFiles('patches/**', '!patches/guests/**') }}-
+          key: cargo-pitchfork-${{ runner.os }}-${{ hashFiles('patches/**') }}-${{ needs.pitchfork-ref.outputs.commit }}
+          restore-keys: cargo-pitchfork-${{ runner.os }}-${{ hashFiles('patches/**') }}-
       - name: Build
         if: steps.pitchfork.outputs.cache-hit != 'true'
         run: scripts/build-pitchfork.sh ../src "$RUNNER_TEMP/out"
@@ -103,7 +103,7 @@ jobs:
           path: |
             ~/.cargo/registry
             ${{ env.CARGO_TARGET_DIR }}
-          key: cargo-pitchfork-${{ runner.os }}-${{ hashFiles('patches/**', '!patches/guests/**') }}-${{ needs.pitchfork-ref.outputs.commit }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: cargo-pitchfork-${{ runner.os }}-${{ hashFiles('patches/**') }}-${{ needs.pitchfork-ref.outputs.commit }}-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Check the build artifacts
         run: test -s "$RUNNER_TEMP/out/pitchfork.js" && test -s "$RUNNER_TEMP/out/pitchfork.wasm"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

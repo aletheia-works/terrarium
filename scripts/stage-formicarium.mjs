@@ -6,6 +6,7 @@ import {
   candidateFile,
   candidateTransaction,
 } from './candidate-transaction.mjs';
+import { validateUnmodifiedProvenance } from './latest-guest-resolver.mjs';
 import { validateLatest } from './latest-guests.mjs';
 import { INPUT_ROOT, verifyInputs } from './prepare-formicarium.mjs';
 import {
@@ -167,7 +168,21 @@ async function guestInputs(guestSite, resolverRoot) {
           '/web/'.length,
         );
       validateGuestElf(files.get(local(build.guest)));
-      validateProvenance(JSON.parse(files.get(local(build.buildInfo))), build);
+      const info = JSON.parse(files.get(local(build.buildInfo)));
+      if (build.source.type === 'git-unmodified') {
+        validateUnmodifiedProvenance(info, build);
+        if (
+          !modules.some((entry) =>
+            entry.relative.endsWith('/latest-resolver.js'),
+          )
+        )
+          modules.push({
+            relative: 'formicarium-guest-distribution/latest-resolver.js',
+            bytes: await readFile(
+              new URL('./latest-guest-resolver.mjs', import.meta.url),
+            ),
+          });
+      } else validateProvenance(info, build);
     }
   }
   return {

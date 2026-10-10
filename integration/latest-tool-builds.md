@@ -7,8 +7,8 @@ are `latest`; deployed defaults are concrete tags.
 The reusable `build-latest-guests.yml` workflow resolves each tag and full commit
 once, downloads the source archive for that commit, and compiles static musl
 x86-64 guests. Pitchfork's UI uses the freshly built aube and Node 24.21.0. Its
-musl patch is separate from the legacy Emscripten patches. Already incorporated
-upstream fixes are reverse-checked and recorded as `present-upstream`.
+guest sources are compiled without local patches. Pitchfork's musl ioctl fix is
+already upstream in v2.30.1; no copy of the obsolete patch is needed.
 
 Before publishing the guest catalogue, the workflow executes each guest's
 `--version` command in Node, Chromium, Firefox, and WebKit. Browser tests also
@@ -18,7 +18,10 @@ acceptance prevents deployment and leaves the previous deployed site available.
 `TERRARIUM_GUEST_SITE` selects the generated catalogue during assembly. All
 registered tools must match the resolved repositories, tags and commits.
 Assembly validates asset digests, ELF format and provenance before switching the
-candidate. Fixed RC inputs still supply the pinned runtime and resolver. Their
+candidate. Fixed RC inputs still supply the pinned runtime and validation helpers. Latest
+guests use terrarium's resolver with explicit `git-unmodified` source identity
+and an empty `sourcePatches` list, instead of the frozen resolver's historical
+pitchfork patch-SHA requirement. The fixed acceptance resolver stays unchanged. Their
 historical guest defaults cannot override this generated catalogue. Without the
 variable, fixed RC acceptance retains its recorded versions.
 
@@ -51,13 +54,13 @@ The GitHub resolver returned aube v2.7.0 at
 `1054549e85470b08d9507e2c82c850959a4b3914`.
 
 The local candidate used the verified RC archive's unchanged aube v2.7.0 binary
-and the existing formicarium v2.30.1 native build with its recorded commit, patch
-and UI metadata. Both passed Node execution and all six browser version/commit
+and the existing formicarium v2.30.1 native build with its recorded commit and UI metadata; the ioctl correction is already
+part of that upstream source. Both passed Node execution and all six browser version/commit
 checks. This checks assembly and runtime execution; the new Linux CI separately
 builds both resolved commits from source.
 
 Commands: `node scripts/check-latest-guests.mjs .vendor/site-latest` and
 `playwright test --config playwright.latest.config.ts` with the candidate site
-and bun paths explicitly set. Package CI passed 151 tests, type-check and build.
+and bun paths explicitly set. Package CI passed 162 tests, type-check and build.
 `mise run lint:all` passed. Existing three-browser suites passed: 34 legacy
 checks (two existing skips) and 45 fixed-RC checks.

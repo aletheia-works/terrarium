@@ -4,6 +4,8 @@ import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+import { validateUnmodifiedProvenance } from './latest-guest-resolver.mjs';
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const hash = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const load = async (filename) => JSON.parse(await readFile(filename, 'utf8'));
@@ -93,7 +95,7 @@ export async function stageLatest({
   resolverRoot,
 }) {
   const registered = await load(path.join(root, 'web/tools.json'));
-  const { validateGuestElf, validateProvenance } = await import(
+  const { validateGuestElf } = await import(
     pathToFileURL(path.join(resolverRoot, 'resolver.js')).href
   );
   const { validateBuild } = await import(
@@ -121,6 +123,7 @@ export async function stageLatest({
       tool,
       ref: resolved.ref,
       source: {
+        type: 'git-unmodified',
         url: config.repository,
         ref: resolved.ref,
         commit: resolved.commit,
@@ -135,7 +138,7 @@ export async function stageLatest({
       ref: resolved.ref,
       base: 'https://stage.invalid/web/',
     });
-    validateProvenance(provenance, build);
+    validateUnmodifiedProvenance(provenance, build);
     tools[tool] = { ...config, default: resolved.ref };
     builds.builds[tool] = { [resolved.ref]: build };
     await mkdir(path.join(destination, directory), { recursive: true });
@@ -188,6 +191,7 @@ async function buildLatest(resolutions, destination) {
       tool,
       ref: resolved.ref,
       source: {
+        type: 'git-unmodified',
         url: `https://github.com/${resolved.repo}`,
         ref: resolved.ref,
         commit: resolved.commit,
@@ -196,17 +200,10 @@ async function buildLatest(resolutions, destination) {
       target: 'x86_64-unknown-linux-musl',
       linkage: 'static',
       libc: 'musl',
+      sourcePatches: [],
       rustc: execFileSync('rustc', ['--version'], { encoding: 'utf8' }).trim(),
     };
     if (tool === 'pitchfork') {
-      info.patch_state = (
-        await readFile(path.join(destination, 'pitchfork.patch-state'), 'utf8')
-      ).trim();
-      info.patch_sha256 = hash(
-        await readFile(
-          path.join(root, 'patches/guests/pitchfork-musl-ioctl.patch'),
-        ),
-      );
       info.ui_node = execFileSync(
         'mise',
         ['exec', 'node@24.21.0', '--', 'node', '--version'],

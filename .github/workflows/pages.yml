@@ -43,7 +43,6 @@ on:
       - "packages/terrarium/package.json"
       - "packages/terrarium/bun.lock"
       - "scripts/**"
-      - "patches/guests/**"
       - ".github/workflows/build-latest-guests.yml"
       - "scripts/load-builds.sh"
       - "scripts/stage-web.sh"
@@ -154,8 +153,8 @@ jobs:
           path: |
             ~/.cargo/registry
             ${{ env.CARGO_TARGET_DIR }}
-          key: cargo-${{ matrix.tool }}-${{ runner.os }}-${{ hashFiles('patches/**', '!patches/guests/**') }}-${{ matrix.commit }}
-          restore-keys: cargo-${{ matrix.tool }}-${{ runner.os }}-${{ hashFiles('patches/**', '!patches/guests/**') }}-
+          key: cargo-${{ matrix.tool }}-${{ runner.os }}-${{ hashFiles('patches/**') }}-${{ matrix.commit }}
+          restore-keys: cargo-${{ matrix.tool }}-${{ runner.os }}-${{ hashFiles('patches/**') }}-
       - name: Build
         env:
           TOOL: ${{ matrix.tool }}
@@ -167,7 +166,7 @@ jobs:
           path: |
             ~/.cargo/registry
             ${{ env.CARGO_TARGET_DIR }}
-          key: cargo-${{ matrix.tool }}-${{ runner.os }}-${{ hashFiles('patches/**', '!patches/guests/**') }}-${{ matrix.commit }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: cargo-${{ matrix.tool }}-${{ runner.os }}-${{ hashFiles('patches/**') }}-${{ matrix.commit }}-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Record what was built
         env:
           BUILD: ${{ toJSON(matrix) }}

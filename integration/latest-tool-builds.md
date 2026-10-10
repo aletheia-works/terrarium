@@ -5,10 +5,18 @@ daily run, site-changing push to main, and manual deployment. Source defaults
 are `latest`; deployed defaults are concrete tags.
 
 The reusable `build-latest-guests.yml` workflow resolves each tag and full commit
-once, downloads the source archive for that commit, and compiles static musl
-x86-64 guests. Pitchfork's UI uses the freshly built aube and Node 24.21.0. Its
-guest sources are compiled without local patches. Pitchfork's musl ioctl fix is
-already upstream in v2.30.1; no copy of the obsolete patch is needed.
+once. It prefers the official x86-64 static musl release archive, verifies its
+publisher SHA256 and size, extracts its executable without following archive
+links, and validates the ELF before use. It records the release URL and archive
+digest; the source commit identifies the release tag, not a reproducibility
+attestation for the publisher's binary.
+
+Aube v2.7.0 uses its official musl binary without a source build. Pitchfork
+v2.30.1 only publishes a dynamically linked glibc Linux binary, so terrarium
+compiles the resolved upstream commit to static musl without local patches.
+Its UI uses the official aube binary and Node 24.21.0. Cargo and rustc come from
+terrarium's pinned mise installation, bypassing upstream contributor wrappers.
+The musl ioctl fix is already upstream; no obsolete patch is needed.
 
 Before publishing the guest catalogue, the workflow executes each guest's
 `--version` command in Node, Chromium, Firefox, and WebKit. Browser tests also
@@ -25,7 +33,7 @@ pitchfork patch-SHA requirement. The fixed acceptance resolver stays unchanged. 
 historical guest defaults cannot override this generated catalogue. Without the
 variable, fixed RC acceptance retains its recorded versions.
 
-New tools use the same release policy and must have a native builder and runtime
+New tools use the same release policy and must have a compatible official asset or native builder, plus runtime
 support before registration. Missing builders or unsupported guests stop the
 run. A tool without stable GitHub releases requires an agreed alternative policy.
 Manual ref builds still produce legacy Emscripten assets; they do not replace the
@@ -53,14 +61,16 @@ The GitHub resolver returned aube v2.7.0 at
 `d36fec01764689ef6d99a5e43de98925b571d67f` and pitchfork v2.30.1 at
 `1054549e85470b08d9507e2c82c850959a4b3914`.
 
-The local candidate used the verified RC archive's unchanged aube v2.7.0 binary
-and the existing formicarium v2.30.1 native build with its recorded commit and UI metadata; the ioctl correction is already
-part of that upstream source. Both passed Node execution and all six browser version/commit
-checks. This checks assembly and runtime execution; the new Linux CI separately
-builds both resolved commits from source.
+The local candidate uses the official aube release archive:
+`aube-v2.7.0-x86_64-unknown-linux-musl.tar.gz`, SHA256
+`fc2384d58c560415f6afdfdc7c0f2d10b10f464da608bf1d8be5c8936db68666`.
+Pitchfork uses the existing unmodified native build of the resolved source for
+local Mac execution checks; Linux CI builds that commit with pinned Rust.
+Both passed Node execution and all six browser version/commit checks
+(Chromium, Firefox and WebKit; 12.7 seconds). Package CI passed type-check,
+166 tests / 612 assertions and build. `mise run lint:all` passed.
 
 Commands: `node scripts/check-latest-guests.mjs .vendor/site-latest` and
 `playwright test --config playwright.latest.config.ts` with the candidate site
-and bun paths explicitly set. Package CI passed 162 tests, type-check and build.
-`mise run lint:all` passed. Existing three-browser suites passed: 34 legacy
-checks (two existing skips) and 45 fixed-RC checks.
+and bun paths explicitly set. The PR's latest-guests workflow additionally
+checks the fresh Linux source build before accepting its catalogue.

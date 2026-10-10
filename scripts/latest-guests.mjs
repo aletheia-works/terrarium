@@ -3,8 +3,8 @@ import { createHash } from 'node:crypto';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-
 import { validateUnmodifiedProvenance } from './latest-guest-resolver.mjs';
+import { archiveFiles } from './prepare-formicarium.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const hash = (bytes) => createHash('sha256').update(bytes).digest('hex');
@@ -34,7 +34,37 @@ export async function resolveLatest(tools, api = github) {
     const { sha: commit } = await api(`repos/${repo}/commits/${ref}`);
     if (!/^[0-9a-f]{40}$/.test(commit))
       throw new Error('invalid source commit');
-    resolutions[tool] = { repo, ref, commit };
+    const names = new Set([
+      `${tool}-${ref}-x86_64-unknown-linux-musl.tar.gz`,
+      `${tool}-x86_64-unknown-linux-musl.tar.gz`,
+    ]);
+    const assets = (release.assets ?? []).filter((asset) =>
+      names.has(asset.name),
+    );
+    if (assets.length > 1)
+      throw new Error(`ambiguous musl release asset: ${tool}`);
+    const asset = assets[0];
+    const releaseAsset = asset && {
+      name: asset.name,
+      url: asset.browser_download_url,
+      sha256: asset.digest?.match(/^sha256:([0-9a-f]{64})$/)?.[1],
+      size: asset.size,
+    };
+    if (
+      releaseAsset &&
+      (!releaseAsset.sha256 ||
+        releaseAsset.url !==
+          `https://github.com/${repo}/releases/download/${ref}/${releaseAsset.name}` ||
+        !Number.isSafeInteger(releaseAsset.size) ||
+        releaseAsset.size <= 0)
+    )
+      throw new Error(`invalid release asset identity: ${tool}`);
+    resolutions[tool] = {
+      repo,
+      ref,
+      commit,
+      ...(releaseAsset && { releaseAsset }),
+    };
   }
   if (!Object.keys(resolutions).length) throw new Error('no registered tools');
   return { schemaVersion: 1, tools: resolutions };
@@ -110,6 +140,13 @@ export async function stageLatest({
     validateGuestElf(guest);
     const info = await readFile(path.join(binaries, `${tool}.json`));
     const provenance = JSON.parse(info);
+    if (
+      resolved.releaseAsset &&
+      (provenance.provenanceKind !== 'upstream-release' ||
+        JSON.stringify(provenance.releaseAsset) !==
+          JSON.stringify(resolved.releaseAsset))
+    )
+      throw new Error(`release asset provenance mismatch: ${tool}`);
     const fixture = Buffer.from(
       `${JSON.stringify(await fixtureFiles(path.join(root, 'fixtures', config.fixture)), null, 2)}\n`,
     );
@@ -155,37 +192,36 @@ export async function stageLatest({
   await save(path.join(destination, 'latest-resolutions.json'), resolutions);
 }
 
-async function buildLatest(resolutions, destination) {
-  // Builders are explicit; adding a registered tool without one fails the run.
-  for (const tool of Object.keys(resolutions.tools)) {
-    if (!['aube', 'pitchfork'].includes(tool))
+/** Verify the publisher archive before accepting its one executable. */
+export function releaseBinary(archive, tool, asset) {
+  if (archive.length !== asset.size || hash(archive) !== asset.sha256)
+    throw new Error(`release archive digest/size mismatch: ${tool}`);
+  const candidates = [...archiveFiles(archive, { ignoreLinks: true })].filter(
+    ([name]) => path.posix.basename(name) === tool,
+  );
+  if (candidates.length !== 1)
+    throw new Error(`expected one release executable: ${tool}`);
+  return candidates[0][1];
+}
+
+async function buildLatest(resolutions, destination, resolverRoot) {
+  for (const [tool, resolved] of Object.entries(resolutions.tools)) {
+    if (!resolved.releaseAsset && !['aube', 'pitchfork'].includes(tool))
       throw new Error(`no native guest builder: ${tool}`);
   }
-  run('mise', ['install', 'node@24.21.0'], { cwd: root });
+  const { validateGuestElf } = await import(
+    pathToFileURL(path.join(resolverRoot, 'resolver.js')).href
+  );
+  if (resolutions.tools.pitchfork && !resolutions.tools.pitchfork.releaseAsset)
+    run('mise', ['install', 'node@24.21.0'], { cwd: root });
   await mkdir(destination, { recursive: true });
-  for (const tool of ['aube', 'pitchfork'].filter(
-    (tool) => resolutions.tools[tool],
-  )) {
+  const ordered = Object.keys(resolutions.tools).sort((a, b) =>
+    a === 'aube' ? -1 : b === 'aube' ? 1 : a.localeCompare(b),
+  );
+  for (const tool of ordered) {
     const resolved = resolutions.tools[tool];
     const source = path.join(destination, `source-${tool}-${resolved.commit}`);
-    await mkdir(source, { recursive: true });
     const archive = path.join(destination, `${tool}.tar.gz`);
-    run('curl', [
-      '--fail',
-      '--location',
-      '--retry',
-      '3',
-      `https://codeload.github.com/${resolved.repo}/tar.gz/${resolved.commit}`,
-      '-o',
-      archive,
-    ]);
-    run('tar', ['-xzf', archive, '--strip-components=1', '-C', source]);
-    run('bash', [
-      path.join(root, 'scripts/build-native-guest.sh'),
-      tool,
-      source,
-      destination,
-    ]);
     const info = {
       schemaVersion: 1,
       tool,
@@ -201,17 +237,61 @@ async function buildLatest(resolutions, destination) {
       linkage: 'static',
       libc: 'musl',
       sourcePatches: [],
-      rustc: execFileSync('rustc', ['--version'], { encoding: 'utf8' }).trim(),
     };
-    if (tool === 'pitchfork') {
-      info.ui_node = execFileSync(
-        'mise',
-        ['exec', 'node@24.21.0', '--', 'node', '--version'],
-        { encoding: 'utf8' },
-      ).trim();
-      info.ui_index_sha256 = hash(
-        await readFile(path.join(source, 'ui/dist/index.html')),
+    if (resolved.releaseAsset) {
+      run('curl', [
+        '--fail',
+        '--location',
+        '--retry',
+        '3',
+        resolved.releaseAsset.url,
+        '-o',
+        archive,
+      ]);
+      const binary = releaseBinary(
+        await readFile(archive),
+        tool,
+        resolved.releaseAsset,
       );
+      validateGuestElf(binary);
+      await writeFile(path.join(destination, tool), binary, { mode: 0o755 });
+      info.provenanceKind = 'upstream-release';
+      info.releaseAsset = resolved.releaseAsset;
+      info.timestampMeaning = 'local release import time';
+    } else {
+      await mkdir(source, { recursive: true });
+      run('curl', [
+        '--fail',
+        '--location',
+        '--retry',
+        '3',
+        `https://codeload.github.com/${resolved.repo}/tar.gz/${resolved.commit}`,
+        '-o',
+        archive,
+      ]);
+      run('tar', ['-xzf', archive, '--strip-components=1', '-C', source]);
+      run('bash', [
+        path.join(root, 'scripts/build-native-guest.sh'),
+        tool,
+        source,
+        destination,
+      ]);
+      validateGuestElf(await readFile(path.join(destination, tool)));
+      info.provenanceKind = 'source-build';
+      info.rustc = execFileSync('mise', ['exec', '--', 'rustc', '--version'], {
+        cwd: root,
+        encoding: 'utf8',
+      }).trim();
+      if (tool === 'pitchfork') {
+        info.ui_node = execFileSync(
+          'mise',
+          ['exec', 'node@24.21.0', '--', 'node', '--version'],
+          { cwd: root, encoding: 'utf8' },
+        ).trim();
+        info.ui_index_sha256 = hash(
+          await readFile(path.join(source, 'ui/dist/index.html')),
+        );
+      }
     }
     await save(path.join(destination, `${tool}.json`), info);
   }
@@ -228,7 +308,13 @@ if (
       await resolveLatest(await load(path.join(root, 'web/tools.json'))),
     );
   else if (verb === 'build' && filename && destination)
-    await buildLatest(await load(filename), path.resolve(destination));
+    await buildLatest(
+      await load(filename),
+      path.resolve(destination),
+      path.resolve(
+        resolverRoot ?? path.join(root, '.vendor/formicarium-inputs/resolver'),
+      ),
+    );
   else if (verb === 'stage' && filename && destination && resolverRoot)
     await stageLatest({
       resolutions: await load(filename),
@@ -238,6 +324,6 @@ if (
     });
   else
     throw new Error(
-      'usage: latest-guests.mjs resolve <resolutions.json> | build <resolutions.json> <binaries> | stage <binaries/resolutions.json> <site> <resolver>',
+      'usage: latest-guests.mjs resolve <resolutions.json> | build <resolutions.json> <binaries> [resolver] | stage <binaries/resolutions.json> <site> <resolver>',
     );
 }

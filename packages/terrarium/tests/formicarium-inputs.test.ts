@@ -167,7 +167,7 @@ test('a supplied archive with a different compressed digest is refused before pl
   );
 });
 
-test('four workflows require an explicit input URL and reject missing supply before installation', async () => {
+test('four workflows pin the verified input URL and guard supply before installation', async () => {
   for (const name of [
     'test-terrarium.yml',
     'test-e2e.yml',
@@ -178,10 +178,15 @@ test('four workflows require an explicit input URL and reject missing supply bef
       new URL(`../../../.github/workflows/${name}`, import.meta.url),
       'utf8',
     );
-    expect(source).toMatch(
-      /FORMICARIUM_INPUTS_URL: \$\{\{ vars\.FORMICARIUM_INPUTS_URL \}\}/,
+    expect(source).toContain(
+      "vars.FORMICARIUM_INPUTS_URL || 'https://raw.githubusercontent.com/Marukome0743/terrarium/74baa1101ebf6d8fc310ea70de3ddc071a87c01f/inputs.tar.gz'",
     );
-    expect(source).not.toContain('vars.FORMICARIUM_INPUTS_URL ||');
+    expect(
+      source.indexOf('node scripts/fetch-formicarium-rc.mjs'),
+    ).toBeGreaterThan(source.indexOf('prepare-formicarium.mjs --url'));
+    expect(
+      source.indexOf('node scripts/fetch-formicarium-rc.mjs'),
+    ).toBeLessThan(source.indexOf('bun install --frozen-lockfile'));
     const guard = source
       .split('\n')
       .find((line) => line.includes('FORMICARIUM_INPUTS_URL:?'))
@@ -239,10 +244,19 @@ test('the current sixteen-file explicit supply is accepted and changed resolver 
 test('old resolver-extension archive is rejected by the current exact sixteen-file contract', async () => {
   const f = await fixture();
   const archive = path.join(f.root, 'old-inputs.tar.gz');
-  await writeFile(archive, tar('resolver/resolver.mjs'));
-  await expect(prepareInputs({ archive, output: f.output })).rejects.toThrow(
-    'exact input file set differs',
+  const bytes = tar('resolver/resolver.mjs');
+  await writeFile(archive, bytes);
+  const descriptor = JSON.parse(
+    await readFile(
+      new URL('../../../integration/formicarium-inputs.json', import.meta.url),
+      'utf8',
+    ),
   );
+  // Match this fixture's archive digest to exercise the independent file-set guard.
+  descriptor.distribution = { archiveSha256: sha(bytes) };
+  await expect(
+    prepareInputs({ archive, output: f.output, descriptor }),
+  ).rejects.toThrow('exact input file set differs');
   await expect(
     readFile(path.join(f.output, 'resolver/resolver.mjs')),
   ).rejects.toMatchObject({ code: 'ENOENT' });

@@ -90,5 +90,8 @@
     "integrity": "sha512-SIFbXU1QkxXDATkE0M1Prm65Kq+Q2SkwnDyBwRf/ejEd3mADZT5uueETF+r0AAl4nuDRqbbSkBc7K/fHclwICA==",
     "tarballSha256": "8334d7f14c31109e5be3ec90147aa02105d8d839c4c79eccc1c25cb88eabbb3a",
     "tarballUrl": "https://registry.npmjs.org/@aletheia-works/formicarium/-/formicarium-0.1.0-rc.1.tgz"
+  },
+  "distribution": {
+    "archiveSha256": "f8b5493047389bc4033dee2608070cc4636c43006877145f0be27f72f11348c4"
   }
 }

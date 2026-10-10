@@ -280,10 +280,14 @@ async function buildLatest(resolutions, destination, resolverRoot) {
       ]);
       validateGuestElf(await readFile(path.join(destination, tool)));
       info.provenanceKind = 'source-build';
-      info.rustc = execFileSync('mise', ['exec', 'rust', '--', 'rustc', '--version'], {
-        cwd: root,
-        encoding: 'utf8',
-      }).trim();
+      info.rustc = execFileSync(
+        'mise',
+        ['exec', 'rust', '--', 'rustc', '--version'],
+        {
+          cwd: root,
+          encoding: 'utf8',
+        },
+      ).trim();
       if (tool === 'pitchfork') {
         info.ui_node = execFileSync(
           'mise',

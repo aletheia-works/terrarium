@@ -7,6 +7,7 @@ export interface ReleaseAsset {
   url: string;
   sha256: string;
   size: number;
+  format?: 'binary';
 }
 export function releaseBinary(
   archive: Uint8Array,
@@ -38,3 +39,5 @@ export function validateLatest(
   resolutions: Resolutions,
   registered: Record<string, ToolConfig>,
 ): void;
+
+export function releaseVersion(ref: string): string | undefined;

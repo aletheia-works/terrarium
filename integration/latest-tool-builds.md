@@ -90,3 +90,19 @@ production Pages catalogue. Tests retain page/element/iframe, fixture, event
 and tool-switch behavior assertions, while version/source expectations come
 from the resolved identities. New releases need no hardcoded test version edits.
 Native latest-guests acceptance remains independent and covers production guests.
+
+## Biome latest
+
+Biome uses the official `biome-linux-x64-musl` standalone executable, verified
+against the release asset SHA256 and size before ELF validation. Its scoped tag
+(`@biomejs/biome@<version>`) remains the source/build identity; version assertions
+extract the numeric version without replacing that tag. Latest resolution runs
+for every registered tool, including Biome, on each acceptance and deployment.
+
+The `biome-basic` fixture includes a formatting example and an intentional
+`debugger` lint violation. Node and Chromium/Firefox/WebKit verify formatting,
+file persistence, and lint diagnostics in addition to version/source identity.
+Latest catalogues use a terrarium-owned manifest validator extending the pinned
+validator's tool allowlist with Biome. Fixed RC catalogues and validators stay
+unchanged. Biome is a native guest; the legacy Emscripten workflow continues
+to build aube and pitchfork.

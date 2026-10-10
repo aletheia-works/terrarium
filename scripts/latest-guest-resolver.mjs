@@ -38,7 +38,7 @@ export function validateUnmodifiedProvenance(info, build) {
 /** Reuse the pinned URL, catalogue, fixture and ELF checks with current provenance. */
 export async function resolveGuest(input) {
   const [manifest, fixtures, elf] = await Promise.all([
-    import('./manifest.js'),
+    import('./latest-manifest.js'),
     import('./fixtures.js'),
     import('./resolver.js'),
   ]);

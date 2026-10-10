@@ -12,5 +12,12 @@
     "default": "latest",
     "fixture": "pitchfork-basic",
     "cwd": "/work/app"
+  },
+  "biome": {
+    "label": "Biome",
+    "repository": "https://github.com/biomejs/biome",
+    "default": "latest",
+    "fixture": "biome-basic",
+    "cwd": "/work/app"
   }
 }

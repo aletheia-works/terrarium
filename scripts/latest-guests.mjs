@@ -4,7 +4,12 @@ import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { validateUnmodifiedProvenance } from './latest-guest-resolver.mjs';
+import { validateBuild } from './latest-manifest.mjs';
 import { archiveFiles } from './prepare-formicarium.mjs';
+
+export function releaseVersion(ref) {
+  return ref.match(/^(?:v|@biomejs\/biome@)?(\d+\.\d+\.\d+)$/)?.[1];
+}
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const hash = (bytes) => createHash('sha256').update(bytes).digest('hex');
@@ -29,14 +34,17 @@ export async function resolveLatest(tools, api = github) {
     if (!repo) throw new Error(`invalid repository: ${tool}`);
     const release = await api(`repos/${repo}/releases/latest`);
     const ref = release.tag_name;
-    if (release.draft || release.prerelease || !/^v?\d+\.\d+\.\d+$/.test(ref))
+    if (release.draft || release.prerelease || !releaseVersion(ref))
       throw new Error(`invalid latest stable release: ${tool}`);
-    const { sha: commit } = await api(`repos/${repo}/commits/${ref}`);
+    const { sha: commit } = await api(
+      `repos/${repo}/commits/${encodeURIComponent(ref)}`,
+    );
     if (!/^[0-9a-f]{40}$/.test(commit))
       throw new Error('invalid source commit');
     const names = new Set([
       `${tool}-${ref}-x86_64-unknown-linux-musl.tar.gz`,
       `${tool}-x86_64-unknown-linux-musl.tar.gz`,
+      ...(tool === 'biome' ? ['biome-linux-x64-musl'] : []),
     ]);
     const assets = (release.assets ?? []).filter((asset) =>
       names.has(asset.name),
@@ -49,11 +57,12 @@ export async function resolveLatest(tools, api = github) {
       url: asset.browser_download_url,
       sha256: asset.digest?.match(/^sha256:([0-9a-f]{64})$/)?.[1],
       size: asset.size,
+      ...(tool === 'biome' && { format: 'binary' }),
     };
     if (
       releaseAsset &&
       (!releaseAsset.sha256 ||
-        releaseAsset.url !==
+        decodeURIComponent(releaseAsset.url) !==
           `https://github.com/${repo}/releases/download/${ref}/${releaseAsset.name}` ||
         !Number.isSafeInteger(releaseAsset.size) ||
         releaseAsset.size <= 0)
@@ -85,7 +94,7 @@ export function validateLatest(tools, builds, resolutions, registered) {
     const { repo, ref, commit } = resolutions.tools[tool];
     const build = builds.builds[tool]?.[ref];
     if (
-      !/^v?\d+\.\d+\.\d+$/.test(ref) ||
+      !releaseVersion(ref) ||
       !/^[0-9a-f]{40}$/.test(commit) ||
       registered[tool].repository !== `https://github.com/${repo}` ||
       tools[tool].repository !== registered[tool].repository ||
@@ -127,9 +136,6 @@ export async function stageLatest({
   const registered = await load(path.join(root, 'web/tools.json'));
   const { validateGuestElf } = await import(
     pathToFileURL(path.join(resolverRoot, 'resolver.js')).href
-  );
-  const { validateBuild } = await import(
-    pathToFileURL(path.join(resolverRoot, 'manifest.js')).href
   );
   const tools = {};
   const builds = { builds: {} };
@@ -196,6 +202,7 @@ export async function stageLatest({
 export function releaseBinary(archive, tool, asset) {
   if (archive.length !== asset.size || hash(archive) !== asset.sha256)
     throw new Error(`release archive digest/size mismatch: ${tool}`);
+  if (asset.format === 'binary') return archive;
   const candidates = [...archiveFiles(archive, { ignoreLinks: true })].filter(
     ([name]) => path.posix.basename(name) === tool,
   );

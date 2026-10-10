@@ -14,18 +14,22 @@ if (!bun || !site)
 const manifest = JSON.parse(
   readFileSync(path.join(site, 'web/dist/builds.json'), 'utf8'),
 );
-export const AUBE_REF =
+const aubeRef =
   process.env.TERRARIUM_AUBE_REF ?? Object.keys(manifest.builds.aube)[0];
-export const AUBE_COMMIT =
+if (typeof aubeRef !== 'string' || !/^v[0-9]+\.[0-9]+\.[0-9]+$/.test(aubeRef))
+  throw new Error('resolved aube E2E ref is missing or invalid');
+const aubeCommit =
   process.env.TERRARIUM_AUBE_COMMIT ??
-  manifest.builds.aube[AUBE_REF]?.source.commit;
+  manifest.builds.aube[aubeRef]?.source.commit;
 if (
-  !/^v[0-9]+\.[0-9]+\.[0-9]+$/.test(AUBE_REF) ||
-  !/^[0-9a-f]{40}$/.test(AUBE_COMMIT) ||
-  manifest.builds.aube[AUBE_REF]?.source.commit !== AUBE_COMMIT
+  typeof aubeCommit !== 'string' ||
+  !/^[0-9a-f]{40}$/.test(aubeCommit) ||
+  manifest.builds.aube[aubeRef]?.source.commit !== aubeCommit
 )
   throw new Error('resolved aube E2E identity does not match the staged build');
-export const AUBE_VERSION = AUBE_REF.slice(1);
+export const AUBE_REF = aubeRef;
+export const AUBE_COMMIT = aubeCommit;
+export const AUBE_VERSION = aubeRef.slice(1);
 
 export default defineConfig({
   outputDir: 'test-results/legacy',

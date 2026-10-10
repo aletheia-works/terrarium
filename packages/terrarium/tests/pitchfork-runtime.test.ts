@@ -150,13 +150,13 @@ describe('pitchfork ref resolution', () => {
     expect(metadata(result.stdout)).toMatchObject({
       tool: 'pitchfork',
       repo: 'jdx/pitchfork',
-      name: 'v2.29.0',
-      ref: 'v2.29.0',
+      name: 'v2.30.1',
+      ref: 'v2.30.1',
       commit: sha,
       pr: '',
     });
     expect(readFileSync(join(root, 'gh-calls'), 'utf8')).toContain(
-      'repos/jdx/pitchfork/commits/v2.29.0',
+      'repos/jdx/pitchfork/commits/v2.30.1',
     );
   });
 

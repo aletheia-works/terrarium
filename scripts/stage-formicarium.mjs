@@ -6,6 +6,7 @@ import {
   candidateFile,
   candidateTransaction,
 } from './candidate-transaction.mjs';
+import { validateLatest } from './latest-guests.mjs';
 import { INPUT_ROOT, verifyInputs } from './prepare-formicarium.mjs';
 import {
   RC_NAME,
@@ -142,7 +143,7 @@ async function guestInputs(guestSite, resolverRoot) {
   );
   const boundary = 'https://stage.invalid/web/';
   const files = new Map();
-  for (const tool of ['aube', 'pitchfork']) {
+  for (const tool of Object.keys(tools)) {
     if (!tools[tool] || !manifest.builds?.[tool]?.[tools[tool].default])
       throw new Error(`missing default build: ${tool}`);
     for (const [ref, build] of Object.entries(manifest.builds[tool])) {
@@ -196,6 +197,7 @@ export async function prepareFormicarium({
   guestSite,
   resolverRoot,
   fixedInputIdentity,
+  latestResolutions,
 }) {
   const runtime = await runtimeInputs(packageRoot, packageManifest);
   const guests = await guestInputs(guestSite, resolverRoot);
@@ -234,6 +236,16 @@ export async function prepareFormicarium({
         builds: { ...oldBuilds.builds, ...guests.manifest.builds },
       };
       const files = [
+        ...(latestResolutions
+          ? [
+              {
+                relative: 'latest-resolutions.json',
+                bytes: Buffer.from(
+                  `${JSON.stringify(latestResolutions, null, 2)}\n`,
+                ),
+              },
+            ]
+          : []),
         ...runtime.files,
         ...guests.modules,
         ...guests.files,
@@ -323,6 +335,19 @@ export async function explicitInputs() {
       JSON.stringify(descriptor.publishedRc)
     )
       throw new Error('published RC manifest identity mismatch');
+  }
+  if (process.env.TERRARIUM_GUEST_SITE) {
+    options.guestSite = path.resolve(process.env.TERRARIUM_GUEST_SITE);
+    delete options.fixedInputIdentity;
+    options.latestResolutions = await json(
+      path.join(options.guestSite, 'latest-resolutions.json'),
+    );
+    validateLatest(
+      await json(path.join(options.guestSite, 'tools.json')),
+      await json(path.join(options.guestSite, 'dist/builds.json')),
+      await json(path.join(options.guestSite, 'latest-resolutions.json')),
+      await json(path.join(root, 'web/tools.json')),
+    );
   }
   // All validation occurs before assembly removes or writes its output.
   await runtimeInputs(options.packageRoot, options.packageManifest);

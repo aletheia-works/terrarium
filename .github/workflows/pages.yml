@@ -5,8 +5,8 @@
 # - Run it by hand with a tool and a ref (a branch, a tag, a commit, or
 #   pr-<n>) to build that ref and add it to the page as ?tool=<tool>&ref=<name>.
 #   Without a ref it only redeploys the site.
-# - Every day it builds each tool's default ref (its `default` in tools.json),
-#   when that has moved.
+# - Every day and on site changes, build and verify every latest stable
+#   native guest before deploying. Manual refs still create legacy builds.
 # - A push to main that changes the site redeploys it.
 #
 # Builds live on the `builds` branch (builds.json and <tool>/<name>/),
@@ -42,7 +42,9 @@ on:
       - "packages/terrarium/scripts/**"
       - "packages/terrarium/package.json"
       - "packages/terrarium/bun.lock"
-      - "scripts/assemble-pages.sh"
+      - "scripts/**"
+      - "patches/guests/**"
+      - ".github/workflows/build-latest-guests.yml"
       - "scripts/load-builds.sh"
       - "scripts/stage-web.sh"
       - "mise.toml"
@@ -52,6 +54,10 @@ permissions:
   contents: read
 
 jobs:
+  latest-guests:
+    if: github.repository_owner == 'aletheia-works'
+    uses: ./.github/workflows/build-latest-guests.yml
+
   # The builds to make, as a JSON list of resolve-ref.sh outputs, leaving out
   # the ones already published at the same commit.
   resolve:
@@ -71,9 +77,7 @@ jobs:
           REF: ${{ inputs.ref }}
           FORCE: ${{ inputs.force && 'true' || 'false' }}
         run: |
-          if [ "$EVENT" = schedule ]; then
-            wanted=$(jq -r 'keys[]' web/tools.json)
-          elif [ -n "$REF" ]; then
+          if [ -n "$REF" ]; then
             wanted="$TOOL"
           else
             wanted=
@@ -238,9 +242,9 @@ jobs:
           exit 1
 
   site:
-    needs: [resolve, build, store]
+    needs: [resolve, build, store, latest-guests]
     if: >-
-      always() && needs.resolve.result == 'success' &&
+      always() && needs.latest-guests.result == 'success' && needs.resolve.result == 'success' &&
       needs.build.result != 'cancelled' &&
       (needs.store.result == 'success' || needs.store.result == 'skipped')
     runs-on: ubuntu-latest
@@ -266,7 +270,13 @@ jobs:
       - name: Install the package's dependencies
         working-directory: packages/terrarium
         run: bun install --frozen-lockfile
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: latest-guests
+          path: .vendor/latest-guests
       - name: Assemble the site with the published builds
+        env:
+          TERRARIUM_GUEST_SITE: .vendor/latest-guests
         run: |
           scripts/load-builds.sh
           scripts/stage-web.sh

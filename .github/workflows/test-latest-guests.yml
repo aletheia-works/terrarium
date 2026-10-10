@@ -1,0 +1,12 @@
+name: Test latest guests
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: latest-guests-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  latest:
+    uses: ./.github/workflows/build-latest-guests.yml

@@ -112,8 +112,94 @@ jobs:
           path: ${{ runner.temp }}/out/
           retention-days: 7
 
+  aube-build:
+    name: Build fixed legacy aube
+    outputs:
+      ref: ${{ steps.identity.outputs.ref }}
+      commit: ${{ steps.identity.outputs.commit }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    env:
+      # Fixed regression input; latest aube is exercised by latest / guests.
+      AUBE_REF: "v2.6.1"
+      AUBE_COMMIT: "bd94e42f54d3b5e3dd102716b7197f316cb5f4ed"
+      EMSDK_VERSION: "6.0.10"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Record the fixed regression source
+        id: identity
+        run: |
+          echo "ref=$AUBE_REF" >> "$GITHUB_OUTPUT"
+          echo "commit=$AUBE_COMMIT" >> "$GITHUB_OUTPUT"
+      - name: Set cache-compatible build directories
+        run: |
+          echo "EMSDK=$RUNNER_TEMP/emsdk" >> "$GITHUB_ENV"
+          echo "CARGO_TARGET_DIR=$RUNNER_TEMP/aube-target" >> "$GITHUB_ENV"
+      - name: Cache the fixed aube build
+        id: aube
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/out/
+          # Include the build's script dependencies and linker inputs; unrelated
+          # fetch, staging and lint scripts do not change the compiled artifact.
+          key: aube-${{ runner.os }}-${{ env.AUBE_COMMIT }}-${{ env.EMSDK_VERSION }}-${{ hashFiles('patches/**', 'runtime/syscalls.c', 'runtime/libterrarium.js', 'scripts/build-aube.sh', 'scripts/emscripten-env.sh', 'scripts/patch-rust-src.sh', 'scripts/vendor-patched.sh') }}
+      - name: Install Ninja
+        if: steps.aube.outputs.cache-hit != 'true'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ninja-build
+      - name: Cache emsdk
+        if: steps.aube.outputs.cache-hit != 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.EMSDK }}
+          key: emsdk-${{ runner.os }}-${{ env.EMSDK_VERSION }}
+      - name: Install emsdk
+        if: steps.aube.outputs.cache-hit != 'true'
+        run: |
+          [ -d "$EMSDK" ] || git clone --depth 1 https://github.com/emscripten-core/emsdk "$EMSDK"
+          "$EMSDK/emsdk" install "$EMSDK_VERSION"
+          "$EMSDK/emsdk" activate "$EMSDK_VERSION"
+      - name: Install the Rust toolchain
+        if: steps.aube.outputs.cache-hit != 'true'
+        run: |
+          toolchain=$(basename patches/toolchain/rust-std-*.patch .patch)
+          rustup toolchain install "${toolchain#rust-std-}" --profile minimal --component rust-src --target wasm32-unknown-emscripten
+      - name: Download the fixed aube source
+        if: steps.aube.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ../src
+          curl -fsSL https://codeload.github.com/aubepkg/aube/tar.gz/${{ env.AUBE_COMMIT }} | tar -xz -C ../src --strip-components=1
+      - name: Restore cargo cache
+        if: steps.aube.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ${{ env.CARGO_TARGET_DIR }}
+          key: cargo-aube-${{ runner.os }}-${{ hashFiles('patches/**') }}-${{ env.AUBE_COMMIT }}
+          restore-keys: cargo-aube-${{ runner.os }}-${{ hashFiles('patches/**') }}-
+      - name: Build
+        if: steps.aube.outputs.cache-hit != 'true'
+        run: scripts/build-aube.sh ../src "$RUNNER_TEMP/out"
+      - name: Save cargo cache
+        if: always() && steps.aube.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ${{ env.CARGO_TARGET_DIR }}
+          key: cargo-aube-${{ runner.os }}-${{ hashFiles('patches/**') }}-${{ env.AUBE_COMMIT }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Check the build artifacts
+        run: test -s "$RUNNER_TEMP/out/aube.js" && test -s "$RUNNER_TEMP/out/aube.wasm"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: aube-${{ env.AUBE_REF }}
+          path: ${{ runner.temp }}/out/
+          retention-days: 7
+
   e2e:
-    needs: pitchfork-build
+    needs: [pitchfork-build, aube-build]
     name: E2E (${{ matrix.browser }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -155,15 +241,20 @@ jobs:
           name: pitchfork-${{ needs.pitchfork-build.outputs.ref }}
           path: ${{ runner.temp }}/pitchfork
 
-      # The tests run an archived v2.6.1 Emscripten build of aube, a tag that never
-      # moves, against this pull request's page, element, Session and
-      # fixtures (staged into web/dist/fixtures by stage-web.sh).
-      - name: Fetch the fixed v2.6.1 archive and assemble the site
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: aube-${{ needs.aube-build.outputs.ref }}
+          path: ${{ runner.temp }}/aube
+
+      # Keep the fixed aube regression while building against this PR's runtime.
+      # Production releases are independently covered by latest / guests.
+      - name: Stage the same-run legacy builds and assemble the sites
         env:
-          # Pin the builds snapshot: production Pages now contains native guests.
-          TERRARIUM_BUILDS_BASE: https://raw.githubusercontent.com/aletheia-works/terrarium/9505321ff2401d5d4942b26e344e5a587a63de58
+          AUBE_REF: ${{ needs.aube-build.outputs.ref }}
+          AUBE_COMMIT: ${{ needs.aube-build.outputs.commit }}
         run: |
-          bash scripts/fetch-builds.sh v2.6.1
+          TERRARIUM_SOURCE_URL=https://github.com/aubepkg/aube TERRARIUM_REF="$AUBE_REF" TERRARIUM_COMMIT="$AUBE_COMMIT" \
+            bash scripts/stage-web.sh aube "$AUBE_REF" "$RUNNER_TEMP/aube"
           TERRARIUM_PITCHFORK_BUILD="$RUNNER_TEMP/pitchfork" bash scripts/prepare-pitchfork-e2e.sh
           bash scripts/stage-web.sh
           bash scripts/assemble-pages.sh .vendor/site-legacy legacy

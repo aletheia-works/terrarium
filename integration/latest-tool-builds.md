@@ -82,8 +82,11 @@ checks the fresh Linux source build before accepting its catalogue.
 
 ## Legacy E2E fixture
 
-Legacy Emscripten E2E uses aube v2.6.1 from the builds snapshot
-`9505321ff2401d5d4942b26e344e5a587a63de58`, selected with
-`TERRARIUM_BUILDS_BASE`. Its manifest and JS/Wasm come from the same immutable
-snapshot. This keeps historical runtime regression coverage independent of
-the production Pages catalogue, which now serves latest native guests.
+Legacy Emscripten E2E keeps aube v2.6.1 at source commit
+`bd94e42f54d3b5e3dd102716b7197f316cb5f4ed`. The `aube-build` job builds that
+source with this PR's runtime, patches and toolchain, and caches the JS/Wasm by
+source commit and build inputs. Every browser downloads its same-run artifact;
+a cache miss triggers a build rather than fetching the production catalogue.
+The page/element/iframe and fixture/event regressions keep their fixed version
+expectations. New aube releases require no edits to this baseline. Latest aube
+and pitchfork remain covered independently by the native latest-guests workflow.

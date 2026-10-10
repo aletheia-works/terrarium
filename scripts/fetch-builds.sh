@@ -3,17 +3,15 @@
 # Download published builds of aube from the GitHub Pages site into web/dist/,
 # with their entries of builds.json, so the site can be assembled and tested
 # without building aube (which takes the better part of an hour). Needs curl
-# and jq. TERRARIUM_BUILDS_BASE selects a build archive root directly;
-# otherwise TERRARIUM_SITE selects the Pages site containing dist/.
+# and jq. TERRARIUM_SITE overrides where they come from.
 # These are Emscripten artifacts even when the published catalogue also
 # describes a formicarium guest; omit the guest selector from their legacy build metadata.
 set -euo pipefail
 root=$(cd "$(dirname "$0")/.." && pwd)
 site=${TERRARIUM_SITE:-https://aletheia-works.github.io/terrarium/web}
-base=${TERRARIUM_BUILDS_BASE:-$site/dist}
 dist=$root/web/dist
 mkdir -p "$dist"
-published=$(curl -fsSL "$base/builds.json")
+published=$(curl -fsSL "$site/dist/builds.json")
 manifest=$dist/builds.json
 [ -f "$manifest" ] || echo '{"schema_version":1,"builds":{}}' >"$manifest"
 for name in "$@"; do
@@ -21,7 +19,7 @@ for name in "$@"; do
     { echo "fetch-builds: no published build \"$name\"" >&2; exit 1; }
   mkdir -p "$dist/aube/$name"
   for file in aube.js aube.wasm; do
-    curl -fsSL "$base/aube/$name/$file" -o "$dist/aube/$name/$file"
+    curl -fsSL "$site/dist/aube/$name/$file" -o "$dist/aube/$name/$file"
   done
   jq --arg n "$name" --argjson e "$entry" '.builds.aube[$n] = $e' "$manifest" >"$manifest.tmp"
   mv "$manifest.tmp" "$manifest"

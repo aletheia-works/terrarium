@@ -92,7 +92,7 @@ async function directoryFiles(root) {
 }
 
 /** Read a bounded ustar tar.gz without extracting paths or following links. */
-export function archiveFiles(archive) {
+export function archiveFiles(archive, { ignoreLinks = false } = {}) {
   const bytes = gunzipSync(archive, { maxOutputLength: 512 * 1024 * 1024 });
   const files = new Map();
   const field = (header, start, size) =>
@@ -129,6 +129,8 @@ export function archiveFiles(archive) {
     } else if (type === '0' || type === '') {
       if (files.has(name)) fail(`duplicate archive path: ${name}`);
       files.set(name, bytes.subarray(offset + 512, offset + 512 + size));
+    } else if (ignoreLinks && ['1', '2'].includes(type) && size === 0) {
+      // Release companion aliases are omitted; never extract or follow them.
     } else fail(`archive links/special entries forbidden: ${name}`);
     offset += 512 + Math.ceil(size / 512) * 512;
   }

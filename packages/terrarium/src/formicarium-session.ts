@@ -43,7 +43,7 @@ export function isFormicariumBuild(
   return true;
 }
 
-/** The three frozen C3 modules are served separately, without copying runtime internals. */
+/** Use the historical resolver for fixed acceptance and unmodified-source provenance for latest builds. */
 export async function resolveChoice(
   choice: Choice,
   input: { base: string; fixture?: string; cwd?: string },
@@ -66,7 +66,12 @@ export async function resolveChoice(
     resolve ??
     ((
       await import(
-        new URL('formicarium-guest-distribution/resolver.js', base).href
+        new URL(
+          choice.build.source?.type === 'git-unmodified'
+            ? 'formicarium-guest-distribution/latest-resolver.js'
+            : 'formicarium-guest-distribution/resolver.js',
+          base,
+        ).href
       )
     ).resolveGuest as GuestResolver);
   const selected = await resolver({

@@ -15,6 +15,10 @@ interface StageInput {
   guestSite: string;
   resolverRoot: string;
   checkpoint?: (point: string) => Promise<void>;
+  latestResolutions?: {
+    schemaVersion: number;
+    tools: Record<string, { repo: string; ref: string; commit: string }>;
+  };
 }
 interface StageReceipt {
   installedVersion: string;
@@ -53,7 +57,7 @@ const elf = () => {
   return bytes;
 };
 
-async function fixture() {
+async function fixture(realRepositories = false) {
   const root = await mkdtemp(path.join(tmpdir(), 'terrarium-assets-'));
   dirs.push(root);
   const packageRoot = path.join(root, 'package');
@@ -100,7 +104,12 @@ async function fixture() {
     ['pitchfork', 'v2.30.1'],
   ] as const) {
     const source = {
-      url: `https://source.invalid/${tool}`,
+      url: realRepositories
+        ? {
+            aube: 'https://github.com/aubepkg/aube',
+            pitchfork: 'https://github.com/jdx/pitchfork',
+          }[tool]
+        : `https://source.invalid/${tool}`,
       ref,
       commit: 'b'.repeat(40),
     };
@@ -160,6 +169,43 @@ async function fixture() {
 }
 
 describe('candidate assets staging', () => {
+  test('valid old guest assets are refused before changing an existing latest candidate', async () => {
+    const input = await fixture(true);
+    await save(
+      path.join(input.guestSite, 'tools.json'),
+      json({
+        aube: {
+          repository: 'https://github.com/aubepkg/aube',
+          default: 'v2.7.0',
+        },
+        pitchfork: {
+          repository: 'https://github.com/jdx/pitchfork',
+          default: 'v2.30.1',
+        },
+      }),
+    );
+    await save(path.join(input.webRoot, 'sentinel'), 'previous site');
+    const latestResolutions = {
+      schemaVersion: 1,
+      tools: {
+        aube: { repo: 'aubepkg/aube', ref: 'v2.7.0', commit: 'b'.repeat(40) },
+        pitchfork: {
+          repo: 'jdx/pitchfork',
+          ref: 'v2.30.2',
+          commit: 'c'.repeat(40),
+        },
+      },
+    };
+    await expect(
+      stageFormicarium({ ...input, latestResolutions }),
+    ).rejects.toThrow('latest source mismatch');
+    expect(await readFile(path.join(input.webRoot, 'sentinel'), 'utf8')).toBe(
+      'previous site',
+    );
+    await expect(
+      readFile(path.join(input.webRoot, 'tools.json')),
+    ).rejects.toThrow();
+  });
   test('copies exact installed package worker loader wasm build-info and all advertised refs', async () => {
     const input = await fixture();
     const receipt = await stageFormicarium(input);

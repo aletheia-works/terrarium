@@ -2,14 +2,14 @@
   "aube": {
     "label": "aube",
     "repository": "https://github.com/aubepkg/aube",
-    "default": "main",
+    "default": "latest",
     "fixture": "aube-local-deps",
     "cwd": "/work/app"
   },
   "pitchfork": {
     "label": "pitchfork",
     "repository": "https://github.com/jdx/pitchfork",
-    "default": "v2.29.0",
+    "default": "latest",
     "fixture": "pitchfork-basic",
     "cwd": "/work/app"
   }

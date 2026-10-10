@@ -1,0 +1,69 @@
+name: Build and verify latest guests
+on:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  guests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        with:
+          install_args: bun node rust
+      - name: Install native build dependencies
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq musl-tools cmake make perl
+      - name: Resolve all latest stable releases once
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/latest-guests.mjs resolve .vendor/native/resolutions.json
+      - name: Cache compilation dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            .vendor/native/cargo
+          key: native-musl-${{ runner.os }}-${{ hashFiles('mise.toml', 'scripts/build-native-guest.sh', '.vendor/native/resolutions.json') }}
+          restore-keys: native-musl-${{ runner.os }}-
+      - name: Prepare the pinned runtime and resolver
+        env:
+          FORMICARIUM_INPUTS_URL: ${{ vars.FORMICARIUM_INPUTS_URL || 'https://raw.githubusercontent.com/Marukome0743/terrarium/74baa1101ebf6d8fc310ea70de3ddc071a87c01f/inputs.tar.gz' }}
+        run: |
+          node scripts/prepare-formicarium.mjs --url "$FORMICARIUM_INPUTS_URL"
+          node scripts/fetch-formicarium-rc.mjs
+          cd packages/terrarium
+          bun install --frozen-lockfile
+      - name: Acquire official guests or build unmodified source
+        run: node scripts/latest-guests.mjs build .vendor/native/resolutions.json .vendor/native
+      - name: Stage latest guests and assemble the candidate
+        env:
+          TERRARIUM_GUEST_SITE: .vendor/latest-guests
+        run: |
+          node scripts/latest-guests.mjs stage .vendor/native/resolutions.json .vendor/latest-guests .vendor/formicarium-inputs/resolver
+          bash scripts/assemble-pages.sh .vendor/site-latest
+      - name: Verify actual guest versions in Node
+        run: node scripts/check-latest-guests.mjs .vendor/site-latest
+      - name: Install browsers
+        working-directory: packages/terrarium
+        run: bun x playwright install --with-deps chromium firefox webkit
+      - name: Verify actual guest versions in all three browsers
+        working-directory: packages/terrarium
+        run: TERRARIUM_BUN=$(command -v bun) TERRARIUM_SITE_DIR=$(pwd)/../../.vendor/site-latest bun x playwright test --config playwright.latest.config.ts
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: latest-guests
+          path: .vendor/latest-guests
+          retention-days: 7
+      - name: Save acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: latest-guest-evidence
+          path: |
+            .vendor/native/resolutions.json
+            .vendor/native/*.json
+            packages/terrarium/test-results/latest
+          retention-days: 7

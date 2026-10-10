@@ -6,6 +6,8 @@ import {
   candidateFile,
   candidateTransaction,
 } from './candidate-transaction.mjs';
+import { validateUnmodifiedProvenance } from './latest-guest-resolver.mjs';
+import { validateLatest } from './latest-guests.mjs';
 import { INPUT_ROOT, verifyInputs } from './prepare-formicarium.mjs';
 import {
   RC_NAME,
@@ -142,7 +144,7 @@ async function guestInputs(guestSite, resolverRoot) {
   );
   const boundary = 'https://stage.invalid/web/';
   const files = new Map();
-  for (const tool of ['aube', 'pitchfork']) {
+  for (const tool of Object.keys(tools)) {
     if (!tools[tool] || !manifest.builds?.[tool]?.[tools[tool].default])
       throw new Error(`missing default build: ${tool}`);
     for (const [ref, build] of Object.entries(manifest.builds[tool])) {
@@ -166,7 +168,21 @@ async function guestInputs(guestSite, resolverRoot) {
           '/web/'.length,
         );
       validateGuestElf(files.get(local(build.guest)));
-      validateProvenance(JSON.parse(files.get(local(build.buildInfo))), build);
+      const info = JSON.parse(files.get(local(build.buildInfo)));
+      if (build.source.type === 'git-unmodified') {
+        validateUnmodifiedProvenance(info, build);
+        if (
+          !modules.some((entry) =>
+            entry.relative.endsWith('/latest-resolver.js'),
+          )
+        )
+          modules.push({
+            relative: 'formicarium-guest-distribution/latest-resolver.js',
+            bytes: await readFile(
+              new URL('./latest-guest-resolver.mjs', import.meta.url),
+            ),
+          });
+      } else validateProvenance(info, build);
     }
   }
   return {
@@ -196,9 +212,18 @@ export async function prepareFormicarium({
   guestSite,
   resolverRoot,
   fixedInputIdentity,
+  latestResolutions,
 }) {
   const runtime = await runtimeInputs(packageRoot, packageManifest);
   const guests = await guestInputs(guestSite, resolverRoot);
+  if (latestResolutions)
+    validateLatest(
+      guests.tools,
+      guests.manifest,
+      latestResolutions,
+      await json(new URL('../web/tools.json', import.meta.url)),
+    );
+
   const packageManifestSha256 = sha(await readFile(packageManifest));
   return {
     inputIdentity:
@@ -207,6 +232,7 @@ export async function prepareFormicarium({
         Buffer.from(
           JSON.stringify({
             packageManifestSha256,
+            latestResolutions,
             files: [...runtime.files, ...guests.modules, ...guests.files]
               .map(({ relative, bytes }) => ({
                 path: relative,
@@ -234,6 +260,16 @@ export async function prepareFormicarium({
         builds: { ...oldBuilds.builds, ...guests.manifest.builds },
       };
       const files = [
+        ...(latestResolutions
+          ? [
+              {
+                relative: 'latest-resolutions.json',
+                bytes: Buffer.from(
+                  `${JSON.stringify(latestResolutions, null, 2)}\n`,
+                ),
+              },
+            ]
+          : []),
         ...runtime.files,
         ...guests.modules,
         ...guests.files,
@@ -323,6 +359,19 @@ export async function explicitInputs() {
       JSON.stringify(descriptor.publishedRc)
     )
       throw new Error('published RC manifest identity mismatch');
+  }
+  if (process.env.TERRARIUM_GUEST_SITE) {
+    options.guestSite = path.resolve(process.env.TERRARIUM_GUEST_SITE);
+    delete options.fixedInputIdentity;
+    options.latestResolutions = await json(
+      path.join(options.guestSite, 'latest-resolutions.json'),
+    );
+    validateLatest(
+      await json(path.join(options.guestSite, 'tools.json')),
+      await json(path.join(options.guestSite, 'dist/builds.json')),
+      options.latestResolutions,
+      await json(path.join(root, 'web/tools.json')),
+    );
   }
   // All validation occurs before assembly removes or writes its output.
   await runtimeInputs(options.packageRoot, options.packageManifest);

@@ -39,6 +39,13 @@ export async function assembleCandidate({
   if (!/^[a-zA-Z0-9_.-]+$/.test(version))
     throw new Error('invalid version stamp');
   const prepared = await prepareFormicarium(inputs ?? (await explicitInputs()));
+  if (!docs) {
+    // Reject missing or invalid guest inputs before dependency installation or
+    // type-checking, including on a fresh CI checkout without a docs cache.
+    const docsRoot = path.join(sourceRoot, 'docs');
+    await command('bun', ['install', '--frozen-lockfile'], docsRoot);
+    await command('bun', ['run', 'check'], docsRoot);
+  }
   return candidateTransaction({
     destination,
     protectedPaths: [

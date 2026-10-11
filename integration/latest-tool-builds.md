@@ -150,3 +150,17 @@ same validated candidate. Its generated selection name is
 subsequent deployments; one-off manual refs last until the next catalogue
 replacement. Add a ref to `web/biome-refs.json` to retain it across deployments.
 The legacy aube/pitchfork manual Emscripten build path is unchanged.
+
+### Parallel source acceptance
+
+Source identities are resolved once before dispatch. The latest stable acquisition
+and each registered Biome source build run as independent jobs; Biome jobs have
+separate compilation caches. The candidate job gathers their artifacts, validates
+provenance and runs Node acceptance. Chromium, Firefox and WebKit then run in
+parallel. The required `guests` check succeeds only when all these jobs succeed,
+including on reusable Pages calls.
+
+GitHub Actions shows build and acceptance durations per job. Each successful Biome
+build also records its selection, resolved commit and build time in the job summary.
+Parallelism reduces sequential waiting; it does not reduce the compilation work for
+a cold source build.

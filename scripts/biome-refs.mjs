@@ -108,36 +108,52 @@ if (
   process.argv[1] &&
   path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
 ) {
-  const [configFile, binaries, site, resolver] = process.argv.slice(2);
-  if (!configFile || !binaries || !site || !resolver)
-    throw new Error(
-      'usage: biome-refs.mjs <config> <binaries> <latest-site> <resolver>',
+  const [mode, inputFile, ...args] = process.argv.slice(2);
+  if (mode === 'resolve') {
+    const config = await json(inputFile);
+    if (process.env.BIOME_REF)
+      config.refs.push({
+        repository: process.env.BIOME_REPOSITORY || 'biomejs/biome',
+        ref: process.env.BIOME_REF,
+      });
+    const refs = [];
+    const names = new Set();
+    for (const input of config.refs) {
+      const resolved = await resolveBiomeRef(input);
+      if (names.has(resolved.name))
+        throw new Error('duplicate Biome build name');
+      names.add(resolved.name);
+      refs.push(resolved);
+    }
+    await save(args[0], { refs });
+    console.log(
+      JSON.stringify({
+        include: refs.map(({ name, commit }) => ({ name, commit })),
+      }),
     );
-  const config = await json(configFile);
-  const refs = [];
-  if (process.env.BIOME_REF)
-    config.refs.push({
-      repository: process.env.BIOME_REPOSITORY || 'biomejs/biome',
-      ref: process.env.BIOME_REF,
-    });
-  const names = new Set();
-  for (const input of config.refs) {
-    const resolved = await resolveBiomeRef(input);
-    if (names.has(resolved.name)) throw new Error('duplicate Biome build name');
-    names.add(resolved.name);
-    const out = path.resolve(binaries, resolved.name);
+  } else if (mode === 'build') {
+    const [name, binaries, resolver] = args;
+    const { refs } = await json(inputFile);
+    const resolved = refs.find((ref) => ref.name === name);
+    if (!resolved) throw new Error('unknown Biome build');
     await buildLatest(
       { schemaVersion: 1, tools: { biome: resolved } },
-      out,
+      path.resolve(binaries),
       path.resolve(resolver),
     );
-    await stageBiomeRef(
-      resolved,
-      out,
-      path.resolve(site),
-      path.resolve(resolver),
+  } else if (mode === 'stage') {
+    const [binaries, site, resolver] = args;
+    const { refs } = await json(inputFile);
+    for (const resolved of refs)
+      await stageBiomeRef(
+        resolved,
+        path.resolve(binaries, `biome-ref-${resolved.name}`),
+        path.resolve(site),
+        path.resolve(resolver),
+      );
+    await save(path.join(site, 'biome-ref-resolutions.json'), { refs });
+  } else
+    throw new Error(
+      'usage: biome-refs.mjs <resolve|build|stage> <resolutions/config> <arguments>',
     );
-    refs.push(resolved);
-  }
-  await save(path.join(site, 'biome-ref-resolutions.json'), { refs });
 }

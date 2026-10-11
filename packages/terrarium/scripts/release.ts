@@ -1,4 +1,4 @@
-import { appendFileSync, readFileSync } from 'node:fs';
+import { appendFileSync } from 'node:fs';
 import jsr from '../jsr.json' with { type: 'json' };
 import npm from '../package.json' with { type: 'json' };
 
@@ -6,7 +6,6 @@ export function validateVersion(
   packageMetadata: { name: string; version: string },
   jsrMetadata: { name: string; version: string },
   tag?: string,
-  repositoryMetadata?: { version: string },
 ): string {
   const version = packageMetadata.version;
   if (
@@ -33,9 +32,6 @@ export function validateVersion(
     throw new Error(
       'package.json and jsr.json must have identical names and versions',
     );
-  }
-  if (repositoryMetadata && repositoryMetadata.version !== version) {
-    throw new Error('root package.json and public package versions must agree');
   }
   if (tag !== undefined && tag !== `v${version}`) {
     throw new Error(`Expected tag v${version}, received ${tag}`);
@@ -72,15 +68,7 @@ export async function isPublished(
 }
 
 if (import.meta.main) {
-  const repositoryMetadata = JSON.parse(
-    readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'),
-  );
-  const version = validateVersion(
-    npm,
-    jsr,
-    process.env.RELEASE_TAG,
-    repositoryMetadata,
-  );
+  const version = validateVersion(npm, jsr, process.env.RELEASE_TAG);
   if (process.argv.includes('--registries')) {
     if (!process.env.GITHUB_OUTPUT || !process.env.RELEASE_TAG) {
       throw new Error('Registry checks require RELEASE_TAG and GITHUB_OUTPUT');

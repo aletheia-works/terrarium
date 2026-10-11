@@ -1,7 +1,8 @@
 import { expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
-import { type GitHub, Manifest } from 'release-please';
+import { GitHub, Manifest } from 'release-please';
 import { parseConventionalCommits } from 'release-please/build/src/commit.js';
+import { FileNotFoundError } from 'release-please/build/src/errors/index.js';
 import { buildStrategy } from 'release-please/build/src/factory.js';
 import { TagName } from 'release-please/build/src/util/tag-name.js';
 import { Version } from 'release-please/build/src/version.js';
@@ -28,9 +29,15 @@ function client() {
     repository: { owner: 'aletheia-works', repo: 'terrarium' },
     getFileJson: async (path: string) =>
       path === manifestPath ? versions : JSON.parse(read(path)),
-    getFileContentsOnBranch: async (path: string) => ({
-      parsedContent: read(path),
-    }),
+    getFileContentsOnBranch: async (path: string) => {
+      if (path === 'version.txt') throw new FileNotFoundError(path);
+      const parsedContent = read(path);
+      return {
+        parsedContent,
+        content: Buffer.from(parsedContent).toString('base64'),
+      };
+    },
+    logger: { warn: () => {} },
     findFilesByGlobAndRef: async (path: string) => [path],
     tagIterator: async function* () {
       yield { name: 'terrarium-v0.1.0', sha: 'c'.repeat(40) };
@@ -78,23 +85,21 @@ for (const [message, expected] of [
     );
     expect(pr?.version?.toString()).toBe(expected);
     if (!pr) return;
-    const root = pr.updates.find((entry) => entry.path === 'package.json');
-    expect(root).toBeDefined();
-    expect(
-      JSON.parse(root!.updater.updateContent(read('package.json'))).version,
-    ).toBe(expected);
-    expect(pr.updates.some((entry) => entry.path === 'version.txt')).toBe(
-      false,
+    const changes = await GitHub.prototype.buildChangeSet.call(
+      github,
+      pr.updates,
+      'main',
     );
+    expect(changes.has('version.txt')).toBe(false);
+    expect(changes.has('package.json')).toBe(false);
+    expect(changes.has('CHANGELOG.md')).toBe(true);
     for (const path of [
       'packages/terrarium/package.json',
       'packages/terrarium/jsr.json',
     ]) {
       const update = pr.updates.find((entry) => entry.path === path);
       expect(update).toBeDefined();
-      expect(
-        JSON.parse(update!.updater.updateContent(read(path))).version,
-      ).toBe(expected);
+      expect(JSON.parse(changes.get(path)!.content!).version).toBe(expected);
     }
   });
 }

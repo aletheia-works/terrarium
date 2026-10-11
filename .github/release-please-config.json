@@ -6,7 +6,7 @@
   "pull-request-header": "Release Please calculated this shared version from Conventional Commits. Review and merge this PR to create the Terrarium tag and GitHub release, then publish the terminal package to npm and JSR.",
   "packages": {
     ".": {
-      "release-type": "node",
+      "release-type": "simple",
       "component": "terrarium",
       "include-component-in-tag": false,
       "extra-files": [

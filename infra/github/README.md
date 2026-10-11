@@ -18,9 +18,11 @@ without a seed.
 
 The main ruleset requires `latest / guests` from GitHub Actions alongside
 the existing lint, package and three-browser E2E checks. This is the check-run
-name emitted by `test-latest-guests.yml` calling `build-latest-guests.yml`; it
+name explicitly assigned to the job in `build-latest-guests.yml`; it
 covers release acquisition, native builds, Node execution and all three browsers.
-Keep this context in sync if those workflow job names change.
+That workflow runs directly on PRs and is also called by Pages. Keeping the
+explicit check name avoids a gap in the existing required-check rules during
+workflow consolidation. Keep this context in sync if the job name changes.
 
 ## CI workflows
 

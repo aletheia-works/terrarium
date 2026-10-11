@@ -43,7 +43,8 @@ jobs:
           node scripts/latest-guests.mjs resolve .vendor/native/resolutions.json
           matrix=$(node scripts/tool-refs.mjs resolve web/tool-refs.json .vendor/native/tool-ref-resolutions.json)
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
-          echo "count=$(jq .include.length <<<"$matrix")" >> "$GITHUB_OUTPUT"
+          count=$(jq -er '.include | length' <<<"$matrix")
+          echo "count=$count" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: native-resolutions
@@ -147,7 +148,7 @@ jobs:
           retention-days: 7
   candidate:
     needs: [resolve, latest, refs]
-    if: always() && needs.resolve.result == 'success' && needs.latest.result == 'success' && (needs.refs.result == 'success' || needs.refs.result == 'skipped')
+    if: always() && needs.resolve.result == 'success' && needs.latest.result == 'success' && (needs.refs.result == 'success' || (needs.resolve.outputs.ref_count == '0' && needs.refs.result == 'skipped'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

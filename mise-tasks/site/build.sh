@@ -4,4 +4,5 @@
 # Assemble and verify the entire site before replacing its local candidate.
 set -euo pipefail
 root=$(cd "$(dirname "$0")/../.." && pwd)
+(cd "$root/docs" && bun install --frozen-lockfile && bun run check)
 node "$root/scripts/assemble-candidate.mjs" "${1:-.site}" "${2:-formicarium}"

@@ -16,11 +16,19 @@ The repository and the labels created by hand before this module are adopted
 by `import` blocks in `main.tf`, so the first apply starts from an empty state
 without a seed.
 
-The main ruleset requires `latest / guests` from GitHub Actions alongside
-the existing lint, package and three-browser E2E checks. This is the check-run
-name emitted by `test-latest-guests.yml` calling `build-latest-guests.yml`; it
-covers release acquisition, native builds, Node execution and all three browsers.
-Keep this context in sync if those workflow job names change.
+The main ruleset requires `guests` from GitHub Actions alongside the existing
+lint, package and three-browser E2E checks. This is the default job name in
+`build-latest-guests.yml`, covering release acquisition, native builds, Node
+execution and all three browsers. The workflow runs directly on PRs and is also
+called by Pages.
+
+The check-name migration is two steps: this change retains the explicit
+`name: latest / guests` so its PR satisfies the current ruleset, and merge
+triggers OpenTofu Apply to require `guests`. After confirming that apply
+succeeds, a follow-up PR removes the explicit job name and emits `guests`.
+During this transition, other PRs retaining the old name will wait for the new
+check; they need the follow-up workflow change. Keep the ruleset context in
+sync with the direct PR job's check name.
 
 ## CI workflows
 

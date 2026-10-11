@@ -5,14 +5,20 @@ import { createSession } from '../packages/terrarium/node_modules/@aletheia-work
 
 const site = path.resolve(process.argv[2], 'web');
 const json = async (file) => JSON.parse(await readFile(file, 'utf8'));
-const { refs } = await json(path.join(site, 'biome-ref-resolutions.json'));
+const { refs } = await json(path.join(site, 'tool-ref-resolutions.json'));
 const { builds } = await json(path.join(site, 'dist/builds.json'));
 const { convertFixture } = await import(
   pathToFileURL(path.join(site, 'formicarium-guest-distribution/fixtures.js'))
     .href
 );
 for (const resolved of refs) {
-  const build = builds.biome[resolved.name];
+  const build = builds[resolved.tool][resolved.name];
+  if (
+    build.source.commit !== resolved.commit ||
+    build.source.ref !== resolved.ref ||
+    build.source.url !== `https://github.com/${resolved.repo}`
+  )
+    throw new Error('source ref identity mismatch');
   const guest = await readFile(path.join(site, build.guest.url));
   const entries = convertFixture(
     await json(path.join(site, build.fixtures[resolved.fixture].url)),
@@ -27,8 +33,8 @@ for (const resolved of refs) {
       timeoutMs: 600_000,
     });
     if (version.exitCode !== 0)
-      throw new Error('Biome source version execution failed');
-    if (resolved.expected) {
+      throw new Error('tool source version execution failed');
+    if (resolved.tool === 'biome' && resolved.expected) {
       const result = await s.run({
         guest,
         args: ['migrate', 'prettier', '--write'],

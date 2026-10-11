@@ -89,7 +89,7 @@ for (const resolved of biomeRefs.refs) {
     page,
   }) => {
     await page.goto(
-      `${SITE}/element.html?tool=biome&ref=${encodeURIComponent(resolved.name)}&fixture=${resolved.fixture}`,
+      `${SITE}/element.html?tool=biome&ref=${encodeURIComponent(resolved.name)}`,
     );
     await page.locator('terrarium-terminal').waitFor();
     const ready = await page.evaluate(
@@ -101,6 +101,21 @@ for (const resolved of biomeRefs.refs) {
       tool: 'biome',
       ref: resolved.name,
       commit: resolved.commit,
+    });
+    // Selecting a source build without a fixture keeps the normal tool usable.
+    const normal = await page.evaluate(() =>
+      (document.querySelector('terrarium-terminal') as TerrariumTerminal).run(
+        'biome --version',
+      ),
+    );
+    expect(normal.code).toBe(0);
+    await page.goto(
+      `${SITE}/element.html?tool=biome&ref=${encodeURIComponent(resolved.name)}&fixture=${resolved.fixture}`,
+    );
+    await page.evaluate(async () => {
+      await customElements.whenDefined('terrarium-terminal');
+      await (document.querySelector('terrarium-terminal') as TerrariumTerminal)
+        .ready;
     });
     const result = await page.evaluate(
       (command) =>

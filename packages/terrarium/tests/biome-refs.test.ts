@@ -98,7 +98,12 @@ test('two selection names keep independent immutable metadata', async () => {
     );
     for (const name of ['first', 'second']) {
       const resolved = await resolveBiomeRef(
-        { repository: 'biomejs/biome', ref: 'main', name },
+        {
+          repository: 'biomejs/biome',
+          ref: 'main',
+          name,
+          fixture: 'biome-migrate-prettier',
+        },
         async () => ({ sha: commit }),
       );
       await stageBiomeRef(resolved, directory, directory, resolver);
@@ -107,6 +112,10 @@ test('two selection names keep independent immutable metadata', async () => {
       await readFile(path.join(directory, 'dist/builds.json'), 'utf8'),
     );
     const builds = catalogue.builds.biome;
+    expect(Object.keys(builds.first.fixtures).sort()).toEqual([
+      'biome-basic',
+      'biome-migrate-prettier',
+    ]);
     expect(builds.first.buildInfo.url).not.toBe(builds.second.buildInfo.url);
     for (const name of ['first', 'second']) {
       const bytes = await readFile(

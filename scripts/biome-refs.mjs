@@ -58,15 +58,16 @@ export async function stageBiomeRef(resolved, binaries, site, resolver) {
     provenance.source?.commit !== resolved.commit
   )
     throw new Error('Biome source identity mismatch');
-  const fixture = Buffer.from(
-    `${JSON.stringify(
-      await fixtureFiles(path.join(root, 'fixtures', resolved.fixture)),
-    )}\n`,
-  );
+  const fixtureNames = [...new Set(['biome-basic', resolved.fixture])];
+  const fixtures = {};
+  for (const name of fixtureNames)
+    fixtures[name] = Buffer.from(
+      `${JSON.stringify(await fixtureFiles(path.join(root, 'fixtures', name)))}\n`,
+    );
   // Hash the actual published metadata, including the selection name.
   const adapted = { ...provenance, ref: resolved.name };
   const adaptedInfo = Buffer.from(`${JSON.stringify(adapted)}\n`);
-  const dir = `dist/biome/${sha(Buffer.concat([guest, adaptedInfo, fixture]))}`;
+  const dir = `dist/biome/${sha(Buffer.concat([guest, adaptedInfo, ...Object.values(fixtures)]))}`;
   const asset = (name, bytes) => ({
     url: `${dir}/${name}`,
     sha256: sha(bytes),
@@ -79,7 +80,12 @@ export async function stageBiomeRef(resolved, binaries, site, resolver) {
     built_at: provenance.built_at,
     guest: { ...asset('guest', guest), format: 'static-musl-x86_64' },
     buildInfo: asset('build-info.json', adaptedInfo),
-    fixtures: { [resolved.fixture]: asset('fixture.json', fixture) },
+    fixtures: Object.fromEntries(
+      Object.entries(fixtures).map(([name, bytes]) => [
+        name,
+        asset(`fixture-${name}.json`, bytes),
+      ]),
+    ),
     upstream_pr: resolved.pr ?? null,
   };
   validateBuild(build, {
@@ -92,7 +98,10 @@ export async function stageBiomeRef(resolved, binaries, site, resolver) {
   for (const [name, bytes] of [
     ['guest', guest],
     ['build-info.json', adaptedInfo],
-    ['fixture.json', fixture],
+    ...Object.entries(fixtures).map(([name, bytes]) => [
+      `fixture-${name}.json`,
+      bytes,
+    ]),
   ])
     await writeFile(path.join(site, dir, name), bytes);
   const catalogue = await json(path.join(site, 'dist/builds.json'));

@@ -11,8 +11,6 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   guests:
-    # Keep the existing required-check context across the entry-point migration.
-    name: latest / guests
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:

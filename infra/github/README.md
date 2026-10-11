@@ -22,13 +22,8 @@ lint, package and three-browser E2E checks. This is the default job name in
 execution and all three browsers. The workflow runs directly on PRs and is also
 called by Pages.
 
-The check-name migration is two steps: this change retains the explicit
-`name: latest / guests` so its PR satisfies the current ruleset, and merge
-triggers OpenTofu Apply to require `guests`. After confirming that apply
-succeeds, a follow-up PR removes the explicit job name and emits `guests`.
-During this transition, other PRs retaining the old name will wait for the new
-check; they need the follow-up workflow change. Keep the ruleset context in
-sync with the direct PR job's check name.
+The direct PR job uses its default name `guests`, matching the applied ruleset.
+Keep the ruleset context in sync with the direct PR job's check name.
 
 ## CI workflows
 

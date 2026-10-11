@@ -7,12 +7,22 @@ const source = readFileSync(
   'utf8',
 );
 
-async function pageState(controlled = false, isolated = false) {
+async function pageState(
+  controlled = false,
+  isolated = false,
+  retried = false,
+) {
   let reloads = 0;
   let registrations = 0;
   const listeners = new Map<string, () => void>();
   const registrationListeners = new Map<string, () => void>();
-  const controller = { postMessage: () => {} };
+  const messages: unknown[] = [];
+  const controller = {
+    postMessage: (message: unknown) => messages.push(message),
+  };
+  const stored = new Map(
+    retried ? [['coi-serviceworker-reloaded', 'true']] : [],
+  );
   const worker = {
     controller: controlled ? controller : null,
     addEventListener: (name: string, listener: () => void) =>
@@ -28,6 +38,11 @@ async function pageState(controlled = false, isolated = false) {
     },
   };
   const window = {
+    sessionStorage: {
+      getItem: (key: string) => stored.get(key),
+      setItem: (key: string, value: string) => stored.set(key, value),
+      removeItem: (key: string) => stored.delete(key),
+    },
     crossOriginIsolated: isolated,
     isSecureContext: true,
     document: { currentScript: { src: '/terrarium/coi-serviceworker.js' } },
@@ -41,6 +56,8 @@ async function pageState(controlled = false, isolated = false) {
   runInNewContext(source, { window, navigator: { serviceWorker: worker } });
   await Promise.resolve();
   return {
+    messages,
+    stored,
     worker,
     window,
     listeners,
@@ -62,8 +79,16 @@ test('first installation waits for control instead of reloading on updatefound',
   expect(page.reloads()).toBe(1);
 });
 
-test('an existing non-isolated controller does not cause a reload loop', async () => {
-  expect((await pageState(true)).reloads()).toBe(0);
+test('an existing non-isolated controller retries with the Safari-compatible policy', async () => {
+  const page = await pageState(true);
+  expect(page.messages).toEqual([{ type: 'coepCredentialless', value: false }]);
+  expect(page.reloads()).toBe(1);
+});
+
+test('a failed isolation reload cannot loop across navigations', async () => {
+  const page = await pageState(true, false, true);
+  page.listeners.get('controllerchange')!();
+  expect(page.reloads()).toBe(0);
 });
 
 test('a controllerchange without a controller cannot reload the page', async () => {
@@ -74,6 +99,7 @@ test('a controllerchange without a controller cannot reload the page', async () 
 
 test('an already isolated page neither registers nor reloads', async () => {
   const page = await pageState(true, true);
+  expect(page.stored.has('coi-serviceworker-reloaded')).toBe(false);
   expect(page.registrations()).toBe(0);
   expect(page.reloads()).toBe(0);
 });

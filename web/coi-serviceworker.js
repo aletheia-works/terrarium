@@ -64,13 +64,21 @@ if (typeof window === 'undefined') {
         const coi = {
             shouldRegister: () => true,
             shouldDeregister: () => false,
-            coepCredentialless: () => !(window.chrome || window.netscape),
+            // Use the interoperable policy; credentialless is unsupported by Safari.
+            coepCredentialless: () => false,
             doReload: () => window.location.reload(),
             quiet: false,
             ...window.coi
         };
 
         const n = navigator;
+        // Bound retries across navigations, including denied isolation policies.
+        const reloadKey = "coi-serviceworker-reloaded";
+        let alreadyReloaded = false;
+        try {
+            if (window.crossOriginIsolated) window.sessionStorage.removeItem(reloadKey);
+            alreadyReloaded = window.sessionStorage.getItem(reloadKey) === "true";
+        } catch (_) {}
 
         if (n.serviceWorker && n.serviceWorker.controller) {
             n.serviceWorker.controller.postMessage({
@@ -96,10 +104,11 @@ if (typeof window === 'undefined') {
         if (n.serviceWorker) {
             // An update being found does not mean its worker controls this page.
             // Reload only after activation/claim, so the navigation is intercepted.
-            let reloading = false;
+            let reloading = alreadyReloaded;
             const reloadWhenControlled = () => {
                 if (!reloading && n.serviceWorker.controller && !window.crossOriginIsolated) {
                     reloading = true;
+                    try { window.sessionStorage.setItem(reloadKey, "true"); } catch (_) {}
                     !coi.quiet && console.log("Reloading page to make use of COOP/COEP Service Worker.");
                     coi.doReload();
                 }
@@ -108,6 +117,7 @@ if (typeof window === 'undefined') {
             n.serviceWorker.register(window.document.currentScript.src).then(
                 (registration) => {
                     !coi.quiet && console.log("COOP/COEP Service Worker registered", registration.scope);
+                    reloadWhenControlled();
                 },
                 (err) => {
                     !coi.quiet && console.error("COOP/COEP Service Worker failed to register:", err);

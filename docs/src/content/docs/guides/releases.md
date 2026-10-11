@@ -4,14 +4,15 @@ description: Review a shared release version and publish the terminal package.
 ---
 
 Terrarium uses one release version for the repository, npm and JSR. The root
-`version.txt` is the repository version; `packages/terrarium/package.json` and
+private `package.json` is the repository version; `packages/terrarium/package.json` and
 `packages/terrarium/jsr.json` carry the same version. The initial baseline is
 `0.1.0`. Private documentation tooling has no public release version.
 
 ## Release flow
 
-Release Please reads Conventional Commits across the repository and prepares a
-release PR that updates `CHANGELOG.md`, `version.txt` and both package manifests.
+Release Please uses the same `node` strategy as Vivarium. It reads Conventional
+Commits across the repository and prepares a
+release PR that updates `CHANGELOG.md`, root `package.json` and both public package manifests.
 Review its changelog and wait for the required checks, then merge the PR. This
 creates a `v<version>` tag and GitHub Release. The tag triggers
 `publish-terrarium.yml` to publish the terminal package to npm and JSR through

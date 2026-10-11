@@ -11,6 +11,15 @@ describe('release validation', () => {
     expect(validateVersion(rc, rc, 'v0.2.0-rc.1')).toBe(rc.version);
   });
 
+  test('validates the shared root package version before publishing', () => {
+    expect(
+      validateVersion(metadata, metadata, 'v0.1.0', { version: '0.1.0' }),
+    ).toBe('0.1.0');
+    expect(() =>
+      validateVersion(metadata, metadata, 'v0.1.0', { version: '0.2.0' }),
+    ).toThrow('root package.json and public package versions must agree');
+  });
+
   test('rejects mismatched manifests, tags and invalid versions', () => {
     expect(() =>
       validateVersion(metadata, { ...metadata, version: '0.2.0' }),
@@ -54,7 +63,7 @@ describe('release validation', () => {
       readFileSync(new URL(`../../../${name}`, import.meta.url), 'utf8');
     const config = JSON.parse(read('.github/release-please-config.json'));
     expect(Object.keys(config.packages)).toEqual(['.']);
-    expect(config.packages['.']['release-type']).toBe('simple');
+    expect(config.packages['.']['release-type']).toBe('node');
     expect(config.packages['.']['include-component-in-tag']).toBe(false);
     expect(config.packages['.']['extra-files']).toEqual([
       {
@@ -70,6 +79,10 @@ describe('release validation', () => {
     ]);
     const npm = JSON.parse(read('packages/terrarium/package.json'));
     const jsr = JSON.parse(read('packages/terrarium/jsr.json'));
-    expect(read('version.txt').trim()).toBe(validateVersion(npm, jsr));
+    const repository = JSON.parse(read('package.json'));
+    expect(repository.private).toBe(true);
+    expect(repository.version).toBe(
+      validateVersion(npm, jsr, `v${npm.version}`, repository),
+    );
   });
 });

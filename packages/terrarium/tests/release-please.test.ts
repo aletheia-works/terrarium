@@ -78,9 +78,13 @@ for (const [message, expected] of [
     );
     expect(pr?.version?.toString()).toBe(expected);
     if (!pr) return;
-    const root = pr.updates.find((entry) => entry.path === 'version.txt');
-    expect(root?.updater.updateContent(read('version.txt')).trim()).toBe(
-      expected,
+    const root = pr.updates.find((entry) => entry.path === 'package.json');
+    expect(root).toBeDefined();
+    expect(
+      JSON.parse(root!.updater.updateContent(read('package.json'))).version,
+    ).toBe(expected);
+    expect(pr.updates.some((entry) => entry.path === 'version.txt')).toBe(
+      false,
     );
     for (const path of [
       'packages/terrarium/package.json',
@@ -101,6 +105,9 @@ test('one reviewed release PR creates one v-tag on its merge commit', async () =
   const prs = await manifest.buildPullRequests();
   expect(prs).toHaveLength(1);
   const pr = prs[0]!;
+  expect(pr.headRefName).toBe(
+    'release-please--branches--main--components--terrarium',
+  );
   let content = JSON.stringify(versions);
   for (const update of pr.updates) {
     if (update.path === manifestPath)

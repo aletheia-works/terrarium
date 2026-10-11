@@ -109,3 +109,58 @@ Latest catalogues use a terrarium-owned manifest validator extending the pinned
 validator's tool allowlist with Biome. Fixed RC catalogues and validators stay
 unchanged. Biome is a native guest; the legacy Emscripten workflow continues
 to build aube and pitchfork.
+
+## Biome source refs and Vivarium comparison
+
+`web/biome-refs.json` registers additional source builds without changing the
+latest stable default. Each entry specifies `repository` (`owner/biome`, including
+forks), `ref` (branch, full commit, or `pr-<number>`), a unique selection `name`,
+and a fixture. Resolution captures the full commit once; the build downloads
+that commit and compiles `biome_cli` to static x86-64 musl without patches.
+Provenance retains the source repository/ref/commit and any PR URL. Catalogue
+assets are content-addressed and checked by the existing resolver.
+
+The registered comparison uses JamBalaya56562's fix branch and its parent:
+
+- Before: `2405c7620169bd0719166af09a8d89cc76fb37fb`, `migrate-prettier-before`.
+- After: `fix/migrate-prettier-default-semi-quotes`, `migrate-prettier-after`.
+
+The `biome-migrate-prettier` fixture starts with empty `biome.json` and
+`.prettierrc`. Run `biome migrate prettier --write`, then `cat biome.json`.
+Node and all three browsers assert `asNeeded`/`single` before and
+`always`/`double` after. Each terminal owns a separate session/disk.
+
+After deployment, use these two URLs as Vivarium terminal sources:
+
+```text
+https://aletheia-works.github.io/terrarium/?tool=biome&ref=migrate-prettier-before&fixture=biome-migrate-prettier
+https://aletheia-works.github.io/terrarium/?tool=biome&ref=migrate-prettier-after&fixture=biome-migrate-prettier
+```
+
+The same `tool`, `ref`, and `fixture` attributes work on the custom element and
+iframe. Add `run=biome%20migrate%20prettier%20--write&run=cat%20biome.json` for
+an automatic recorded run. The displayed source identity distinguishes the
+original requested ref from its exact compiled commit.
+
+Pages manual dispatch accepts tool `biome`, repository `owner/biome`, and a
+branch, commit or `pr-<number>` in `ref`. It adds that source build to the
+same validated candidate. Its generated selection name is
+`<owner>-biome-<commit-first-12>`; that commit and name are recorded in the
+`biome-ref-resolutions.json` artifact. Configured comparisons are rebuilt on
+subsequent deployments; one-off manual refs last until the next catalogue
+replacement. Add a ref to `web/biome-refs.json` to retain it across deployments.
+The legacy aube/pitchfork manual Emscripten build path is unchanged.
+
+### Parallel source acceptance
+
+Source identities are resolved once before dispatch. The latest stable acquisition
+and each registered Biome source build run as independent jobs; Biome jobs have
+separate compilation caches. The candidate job gathers their artifacts, validates
+provenance and runs Node acceptance. Chromium, Firefox and WebKit then run in
+parallel. The required `guests` check succeeds only when all these jobs succeed,
+including on reusable Pages calls.
+
+GitHub Actions shows build and acceptance durations per job. Each successful Biome
+build also records its selection, resolved commit and build time in the job summary.
+Parallelism reduces sequential waiting; it does not reduce the compilation work for
+a cold source build.

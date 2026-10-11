@@ -21,12 +21,16 @@ on:
       tool:
         description: "Tool to build, a key of web/tools.json."
         type: choice
-        options: [aube, pitchfork]
+        options: [aube, pitchfork, biome]
         default: aube
       ref:
         description: "Ref to build: branch, tag, commit, or pr-<number>. Empty: only redeploy the site."
         required: false
         default: ""
+      repository:
+        description: "Biome source repository, including forks (owner/biome)."
+        type: string
+        default: biomejs/biome
       force:
         description: "Build even if this ref's commit is already published."
         type: boolean
@@ -56,6 +60,9 @@ jobs:
   latest-guests:
     if: github.repository_owner == 'aletheia-works'
     uses: ./.github/workflows/build-latest-guests.yml
+    with:
+      biome_repository: ${{ inputs.repository || 'biomejs/biome' }}
+      biome_ref: ${{ inputs.tool == 'biome' && inputs.ref || '' }}
 
   # The builds to make, as a JSON list of resolve-ref.sh outputs, leaving out
   # the ones already published at the same commit.
@@ -76,7 +83,7 @@ jobs:
           REF: ${{ inputs.ref }}
           FORCE: ${{ inputs.force && 'true' || 'false' }}
         run: |
-          if [ -n "$REF" ]; then
+          if [ -n "$REF" ] && [ "$TOOL" != biome ]; then
             wanted="$TOOL"
           else
             wanted=

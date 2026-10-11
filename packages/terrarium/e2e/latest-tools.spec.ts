@@ -86,7 +86,7 @@ const toolRefs = JSON.parse(
   }>;
 };
 for (const resolved of toolRefs.refs) {
-  test(`source ref ${resolved.tool}/${resolved.name} executes with its exact identity and migration behavior`, async ({
+  test(`source ref ${resolved.tool}/${resolved.name} executes with its exact identity and fixture behavior`, async ({
     page,
   }) => {
     await page.goto(
@@ -112,6 +112,7 @@ for (const resolved of toolRefs.refs) {
       resolved.tool,
     );
     expect(normal.code).toBe(0);
+    expect(normal.output.trim()).not.toBe('');
     await page.goto(
       `${SITE}/element.html?tool=${encodeURIComponent(resolved.tool)}&ref=${encodeURIComponent(resolved.name)}&fixture=${resolved.fixture}`,
     );

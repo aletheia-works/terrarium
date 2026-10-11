@@ -4,7 +4,7 @@
 #
 # - Run it by hand with a tool and a ref (a branch, a tag, a commit, or
 #   pr-<n>) to build that ref and add it to the page as ?tool=<tool>&ref=<name>.
-#   Without a ref it only redeploys the site.
+#   Without a ref it accepts latest releases and configured refs.
 # - Every day and on site changes, build and verify every latest stable
 #   native guest before deploying. Manual refs use the same native guest pipeline.
 # - A push to main that changes the site redeploys it.
@@ -22,7 +22,7 @@ on:
         type: string
         default: aube
       ref:
-        description: "Ref to build: branch, tag, commit, or pr-<number>. Empty: only redeploy the site."
+        description: "Ref to build: branch, tag, commit, or pr-<number>. Empty: latest releases and configured refs only."
         required: false
         default: ""
       repository:

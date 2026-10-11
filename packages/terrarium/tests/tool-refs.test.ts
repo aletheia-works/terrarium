@@ -53,88 +53,129 @@ test('unsafe repositories, labels and invalid commits fail before build', async 
   ).rejects.toThrow('invalid commit');
 });
 
-test('two selection names keep independent immutable metadata', async () => {
-  const directory = await mkdtemp(path.join(tmpdir(), 'biome-alias-'));
-  try {
-    const guest = Buffer.alloc(120);
-    guest.set([127, 69, 76, 70, 2, 1, 1]);
-    guest.writeUInt16LE(2, 16);
-    guest.writeUInt16LE(62, 18);
-    guest.writeUInt32LE(1, 20);
-    guest.writeBigUInt64LE(64n, 32);
-    guest.writeUInt16LE(64, 52);
-    guest.writeUInt16LE(56, 54);
-    guest.writeUInt16LE(1, 56);
-    guest.writeUInt32LE(1, 64);
-    const source = {
-      type: 'git-unmodified',
-      url: 'https://github.com/biomejs/biome',
-      ref: 'main',
-      commit,
-    };
-    await writeFile(path.join(directory, 'biome'), guest);
-    await writeFile(
-      path.join(directory, 'biome.json'),
-      JSON.stringify({
-        schemaVersion: 1,
-        tool: 'biome',
+for (const tool of ['aube', 'pitchfork', 'biome']) {
+  test(`${tool} source selections retain independent metadata and the stable default`, async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), `${tool}-alias-`));
+    try {
+      const guest = Buffer.alloc(120);
+      guest.set([127, 69, 76, 70, 2, 1, 1]);
+      guest.writeUInt16LE(2, 16);
+      guest.writeUInt16LE(62, 18);
+      guest.writeUInt32LE(1, 20);
+      guest.writeBigUInt64LE(64n, 32);
+      guest.writeUInt16LE(64, 52);
+      guest.writeUInt16LE(56, 54);
+      guest.writeUInt16LE(1, 56);
+      guest.writeUInt32LE(1, 64);
+      const source = {
+        type: 'git-unmodified',
+        url: `https://github.com/owner/${tool}`,
         ref: 'main',
-        source,
-        built_at: '2026-10-10T00:00:00Z',
-        target: 'x86_64-unknown-linux-musl',
-        linkage: 'static',
-        libc: 'musl',
-        sourcePatches: [],
-      }),
-    );
-    await mkdir(path.join(directory, 'dist'));
-    await writeFile(
-      path.join(directory, 'tools.json'),
-      JSON.stringify({ biome: { default: 'stable' } }),
-    );
-    await writeFile(
-      path.join(directory, 'dist/builds.json'),
-      JSON.stringify({ builds: { biome: {} } }),
-    );
-    const resolver = path.resolve(
-      import.meta.dir,
-      '../../../.vendor/formicarium-inputs/resolver',
-    );
-    for (const name of ['first', 'second']) {
-      const resolved = await resolveToolRef(
-        {
-          tool: 'biome',
-          repository: 'biomejs/biome',
+        commit,
+      };
+      await writeFile(path.join(directory, tool), guest);
+      await writeFile(
+        path.join(directory, `${tool}.json`),
+        JSON.stringify({
+          schemaVersion: 1,
+          tool,
           ref: 'main',
-          name,
-          fixture: 'biome-migrate-prettier',
-        },
-        async () => ({ sha: commit }),
+          source,
+          built_at: '2026-10-10T00:00:00Z',
+          target: 'x86_64-unknown-linux-musl',
+          linkage: 'static',
+          libc: 'musl',
+          sourcePatches: [],
+        }),
       );
-      await stageToolRef(resolved, directory, directory, resolver);
+      await mkdir(path.join(directory, 'dist'));
+      await writeFile(
+        path.join(directory, 'tools.json'),
+        JSON.stringify({ [tool]: { default: 'stable' } }),
+      );
+      await writeFile(
+        path.join(directory, 'dist/builds.json'),
+        JSON.stringify({ builds: { [tool]: {} } }),
+      );
+      const resolver = path.resolve(
+        import.meta.dir,
+        '../../../.vendor/formicarium-inputs/resolver',
+      );
+      for (const name of ['first', 'second']) {
+        const resolved = await resolveToolRef(
+          {
+            tool,
+            repository: `owner/${tool}`,
+            ref: 'main',
+            name,
+            fixture: 'biome-migrate-prettier',
+          },
+          async () => ({ sha: commit }),
+        );
+        await stageToolRef(resolved, directory, directory, resolver);
+      }
+      const catalogue = JSON.parse(
+        await readFile(path.join(directory, 'dist/builds.json'), 'utf8'),
+      );
+      const builds = catalogue.builds[tool];
+      expect(
+        JSON.parse(await readFile(path.join(directory, 'tools.json'), 'utf8'))[
+          tool
+        ].default,
+      ).toBe('stable');
+      expect(builds.first.fixtures['biome-migrate-prettier']).toBeDefined();
+      expect(builds.first.buildInfo.url).not.toBe(builds.second.buildInfo.url);
+      for (const name of ['first', 'second']) {
+        const bytes = await readFile(
+          path.join(directory, builds[name].buildInfo.url),
+        );
+        expect(JSON.parse(bytes.toString()).ref).toBe(name);
+        expect(createHash('sha256').update(bytes).digest('hex')).toBe(
+          builds[name].buildInfo.sha256,
+        );
+      }
+      const before = await readFile(
+        path.join(directory, 'dist/builds.json'),
+        'utf8',
+      );
+      await expect(
+        stageToolRef(
+          {
+            tool,
+            repo: `owner/${tool}`,
+            ref: 'main',
+            commit,
+            name: 'stable',
+            fixture: 'biome-migrate-prettier',
+          },
+          directory,
+          directory,
+          resolver,
+        ),
+      ).rejects.toThrow('cannot replace the latest default');
+      await expect(
+        stageToolRef(
+          {
+            tool,
+            repo: `other/${tool}`,
+            ref: 'main',
+            commit,
+            name: 'first',
+            fixture: 'biome-migrate-prettier',
+          },
+          directory,
+          directory,
+          resolver,
+        ),
+      ).rejects.toThrow('source identity mismatch');
+      expect(
+        await readFile(path.join(directory, 'dist/builds.json'), 'utf8'),
+      ).toBe(before);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
     }
-    const catalogue = JSON.parse(
-      await readFile(path.join(directory, 'dist/builds.json'), 'utf8'),
-    );
-    const builds = catalogue.builds.biome;
-    expect(Object.keys(builds.first.fixtures).sort()).toEqual([
-      'biome-basic',
-      'biome-migrate-prettier',
-    ]);
-    expect(builds.first.buildInfo.url).not.toBe(builds.second.buildInfo.url);
-    for (const name of ['first', 'second']) {
-      const bytes = await readFile(
-        path.join(directory, builds[name].buildInfo.url),
-      );
-      expect(JSON.parse(bytes.toString()).ref).toBe(name);
-      expect(createHash('sha256').update(bytes).digest('hex')).toBe(
-        builds[name].buildInfo.sha256,
-      );
-    }
-  } finally {
-    await rm(directory, { recursive: true, force: true });
-  }
-});
+  });
+}
 
 for (const tool of ['aube', 'pitchfork', 'biome']) {
   for (const ref of ['fix/branch', 'b'.repeat(40), 'pr-42']) {

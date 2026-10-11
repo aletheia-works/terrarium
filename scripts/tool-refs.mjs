@@ -123,6 +123,11 @@ export async function stageToolRef(resolved, binaries, site, resolver) {
   if (tools[tool]?.default === resolved.name)
     throw new Error('source ref cannot replace the latest default');
   if (!catalogue.builds[tool]) throw new Error('missing tool catalogue');
+  if (
+    catalogue.builds[tool][resolved.name]?.source?.commit &&
+    catalogue.builds[tool][resolved.name].source.url !== build.source.url
+  )
+    throw new Error('tool build name repository collision');
   await mkdir(path.join(site, dir), { recursive: true });
   for (const [name, bytes] of [
     ['guest', guest],
@@ -134,11 +139,6 @@ export async function stageToolRef(resolved, binaries, site, resolver) {
   ])
     await writeFile(path.join(site, dir, name), bytes);
 
-  if (
-    catalogue.builds[tool][resolved.name]?.source?.commit &&
-    catalogue.builds[tool][resolved.name].source.url !== build.source.url
-  )
-    throw new Error('tool build name repository collision');
   catalogue.builds[tool][resolved.name] = build;
   await save(path.join(site, 'dist/builds.json'), catalogue);
 }

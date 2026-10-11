@@ -21,16 +21,6 @@
         "quoteStyle": "double"
       },
       "tool": "biome"
-    },
-    {
-      "tool": "aube",
-      "ref": "d36fec01764689ef6d99a5e43de98925b571d67f",
-      "name": "acceptance-aube-source"
-    },
-    {
-      "tool": "pitchfork",
-      "ref": "v2.30.1",
-      "name": "acceptance-pitchfork-source"
     }
   ]
 }

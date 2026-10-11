@@ -71,3 +71,51 @@ if (resolutions.tools.biome) {
     expect(lint.output).toContain('noDebugger');
   });
 }
+
+const biomeRefs = JSON.parse(
+  readFileSync(path.join(site, 'web/biome-ref-resolutions.json'), 'utf8'),
+) as {
+  refs: Array<{
+    name: string;
+    commit: string;
+    ref: string;
+    repo: string;
+    fixture: string;
+    expected?: { semicolons: string; quoteStyle: string };
+  }>;
+};
+for (const resolved of biomeRefs.refs) {
+  test(`Biome source ref ${resolved.name} executes with its exact identity and migration behavior`, async ({
+    page,
+  }) => {
+    await page.goto(
+      `${SITE}/element.html?tool=biome&ref=${encodeURIComponent(resolved.name)}&fixture=${resolved.fixture}`,
+    );
+    await page.locator('terrarium-terminal').waitFor();
+    const ready = await page.evaluate(
+      () =>
+        (document.querySelector('terrarium-terminal') as TerrariumTerminal)
+          .ready,
+    );
+    expect(ready).toMatchObject({
+      tool: 'biome',
+      ref: resolved.name,
+      commit: resolved.commit,
+    });
+    const result = await page.evaluate(() =>
+      (document.querySelector('terrarium-terminal') as TerrariumTerminal).run(
+        'biome migrate prettier --write',
+      ),
+    );
+    if (resolved.expected) {
+      expect(result.code).toBe(0);
+      const config = await page.evaluate(() =>
+        (document.querySelector('terrarium-terminal') as TerrariumTerminal).run(
+          'cat biome.json',
+        ),
+      );
+      const parsed = JSON.parse(config.output);
+      expect(parsed.javascript.formatter).toMatchObject(resolved.expected);
+    }
+  });
+}

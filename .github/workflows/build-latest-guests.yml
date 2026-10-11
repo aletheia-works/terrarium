@@ -1,6 +1,13 @@
 name: Build and verify latest guests
 on:
   workflow_call:
+    inputs:
+      biome_repository:
+        type: string
+        default: biomejs/biome
+      biome_ref:
+        type: string
+        default: ""
   pull_request:
     branches: [main]
 permissions:
@@ -50,6 +57,19 @@ jobs:
         run: |
           node scripts/latest-guests.mjs stage .vendor/native/resolutions.json .vendor/latest-guests .vendor/formicarium-inputs/resolver
           bash scripts/assemble-pages.sh .vendor/site-latest
+      - name: Build and register Biome comparison refs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BIOME_REPOSITORY: ${{ inputs.biome_repository }}
+          BIOME_REF: ${{ inputs.biome_ref }}
+          CARGO_TARGET_DIR: ${{ github.workspace }}/.vendor/native/cargo
+        run: node scripts/biome-refs.mjs web/biome-refs.json .vendor/biome-refs .vendor/latest-guests .vendor/formicarium-inputs/resolver
+      - name: Assemble registered Biome refs
+        env:
+          TERRARIUM_GUEST_SITE: .vendor/latest-guests
+        run: bash scripts/assemble-pages.sh .vendor/site-latest
+      - name: Verify Biome migration in Node
+        run: node scripts/check-biome-refs.mjs .vendor/site-latest
       - name: Verify actual guest versions in Node
         run: node scripts/check-latest-guests.mjs .vendor/site-latest
       - name: Install browsers
@@ -72,4 +92,5 @@ jobs:
             .vendor/native/resolutions.json
             .vendor/native/*.json
             packages/terrarium/test-results/latest
+            .vendor/biome-refs/*/biome.json
           retention-days: 7

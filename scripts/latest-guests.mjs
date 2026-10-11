@@ -108,7 +108,7 @@ export function validateLatest(tools, builds, resolutions, registered) {
   }
 }
 
-async function fixtureFiles(directory, prefix = '') {
+export async function fixtureFiles(directory, prefix = '') {
   const result = {};
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     const relative = `${prefix}${entry.name}`;
@@ -211,11 +211,14 @@ export function releaseBinary(archive, tool, asset) {
   return candidates[0][1];
 }
 
-async function buildLatest(resolutions, destination, resolverRoot) {
+export async function buildLatest(resolutions, destination, resolverRoot) {
   // Setup installs build tools explicitly; never install unrelated project tools.
   process.env.MISE_AUTO_INSTALL = '0';
   for (const [tool, resolved] of Object.entries(resolutions.tools)) {
-    if (!resolved.releaseAsset && !['aube', 'pitchfork'].includes(tool))
+    if (
+      !resolved.releaseAsset &&
+      !['aube', 'pitchfork', 'biome'].includes(tool)
+    )
       throw new Error(`no native guest builder: ${tool}`);
   }
   const { validateGuestElf } = await import(

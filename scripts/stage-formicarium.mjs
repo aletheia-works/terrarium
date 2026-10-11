@@ -196,6 +196,15 @@ async function guestInputs(guestSite, resolverRoot) {
       } else validateProvenance(info, build);
     }
   }
+  const biomeRefs = await optionalJson(
+    path.join(guestSite, 'biome-ref-resolutions.json'),
+    null,
+  );
+  if (biomeRefs)
+    files.set(
+      'biome-ref-resolutions.json',
+      Buffer.from(`${JSON.stringify(biomeRefs, null, 2)}\n`),
+    );
   return {
     tools,
     manifest,

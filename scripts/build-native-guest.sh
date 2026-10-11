@@ -19,6 +19,9 @@ case "$tool" in
     : > "$out/empty-primer.rkyv.zst"
     AUBE_PRIMER_PATH="$out/empty-primer.rkyv.zst" "$cargo_bin" build --release --locked --target "$target" -p aube --bin aube
     ;;
+  biome)
+    "$cargo_bin" build --release --locked --target "$target" -p biome_cli --bin biome
+    ;;
   pitchfork)
     export PATH="$out:$PATH" AUBE_NO_UPDATE_CHECK=1
     node_bin=$(cd "$root" && mise where node@24.21.0)/bin

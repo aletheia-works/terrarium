@@ -1,0 +1,24 @@
+{
+  "refs": [
+    {
+      "repository": "JamBalaya56562/biome",
+      "ref": "2405c7620169bd0719166af09a8d89cc76fb37fb",
+      "name": "migrate-prettier-before",
+      "fixture": "biome-migrate-prettier",
+      "expected": {
+        "semicolons": "asNeeded",
+        "quoteStyle": "single"
+      }
+    },
+    {
+      "repository": "JamBalaya56562/biome",
+      "ref": "fix/migrate-prettier-default-semi-quotes",
+      "name": "migrate-prettier-after",
+      "fixture": "biome-migrate-prettier",
+      "expected": {
+        "semicolons": "always",
+        "quoteStyle": "double"
+      }
+    }
+  ]
+}

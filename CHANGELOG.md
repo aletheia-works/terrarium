@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0](https://github.com/aletheia-works/terrarium/compare/v0.2.0...v0.3.0) (2026-10-11)
+
+
+### Features
+
+* **ci:** schedule weekly release pr merges ([#51](https://github.com/aletheia-works/terrarium/issues/51)) ([09a65bc](https://github.com/aletheia-works/terrarium/commit/09a65bca78c8fb277a0a1e4a84b399a2a275ab79))
+* **docs:** generate cli cards and dedicated consoles from the registry ([#57](https://github.com/aletheia-works/terrarium/issues/57)) ([7bb599f](https://github.com/aletheia-works/terrarium/commit/7bb599fc6e4fedab1d92b251e67c7da18d587585))
+
 ## [0.2.0](https://github.com/aletheia-works/terrarium/compare/v0.1.0...v0.2.0) (2026-10-11)
 
 

@@ -102,13 +102,15 @@ for (const resolved of biomeRefs.refs) {
       ref: resolved.name,
       commit: resolved.commit,
     });
-    const result = await page.evaluate(() =>
-      (document.querySelector('terrarium-terminal') as TerrariumTerminal).run(
-        'biome migrate prettier --write',
-      ),
+    const result = await page.evaluate(
+      (command) =>
+        (document.querySelector('terrarium-terminal') as TerrariumTerminal).run(
+          command,
+        ),
+      resolved.expected ? 'biome migrate prettier --write' : 'biome --version',
     );
+    expect(result.code).toBe(0);
     if (resolved.expected) {
-      expect(result.code).toBe(0);
       const config = await page.evaluate(() =>
         (document.querySelector('terrarium-terminal') as TerrariumTerminal).run(
           'cat biome.json',

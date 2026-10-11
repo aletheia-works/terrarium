@@ -63,7 +63,10 @@ export async function stageBiomeRef(resolved, binaries, site, resolver) {
       await fixtureFiles(path.join(root, 'fixtures', resolved.fixture)),
     )}\n`,
   );
-  const dir = `dist/biome/${sha(Buffer.concat([guest, info, fixture]))}`;
+  // Hash the actual published metadata, including the selection name.
+  const adapted = { ...provenance, ref: resolved.name };
+  const adaptedInfo = Buffer.from(`${JSON.stringify(adapted)}\n`);
+  const dir = `dist/biome/${sha(Buffer.concat([guest, adaptedInfo, fixture]))}`;
   const asset = (name, bytes) => ({
     url: `${dir}/${name}`,
     sha256: sha(bytes),
@@ -75,14 +78,10 @@ export async function stageBiomeRef(resolved, binaries, site, resolver) {
     source: provenance.source,
     built_at: provenance.built_at,
     guest: { ...asset('guest', guest), format: 'static-musl-x86_64' },
-    buildInfo: asset('build-info.json', info),
+    buildInfo: asset('build-info.json', adaptedInfo),
     fixtures: { [resolved.fixture]: asset('fixture.json', fixture) },
     upstream_pr: resolved.pr ?? null,
   };
-  // The catalogue selection name may differ from the original source ref.
-  const adapted = { ...provenance, ref: resolved.name };
-  const adaptedInfo = Buffer.from(`${JSON.stringify(adapted)}\n`);
-  build.buildInfo = asset('build-info.json', adaptedInfo);
   validateBuild(build, {
     tool: 'biome',
     ref: resolved.name,

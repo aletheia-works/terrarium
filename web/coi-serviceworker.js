@@ -94,20 +94,20 @@ if (typeof window === 'undefined') {
 
         // In some environments (e.g. Chrome incognito mode) this won't be available
         if (n.serviceWorker) {
+            // An update being found does not mean its worker controls this page.
+            // Reload only after activation/claim, so the navigation is intercepted.
+            let reloading = false;
+            const reloadWhenControlled = () => {
+                if (!reloading && n.serviceWorker.controller && !window.crossOriginIsolated) {
+                    reloading = true;
+                    !coi.quiet && console.log("Reloading page to make use of COOP/COEP Service Worker.");
+                    coi.doReload();
+                }
+            };
+            n.serviceWorker.addEventListener("controllerchange", reloadWhenControlled);
             n.serviceWorker.register(window.document.currentScript.src).then(
                 (registration) => {
                     !coi.quiet && console.log("COOP/COEP Service Worker registered", registration.scope);
-
-                    registration.addEventListener("updatefound", () => {
-                        !coi.quiet && console.log("Reloading page to make use of updated COOP/COEP Service Worker.");
-                        coi.doReload();
-                    });
-
-                    // If the registration is active, but it's not controlling the page
-                    if (registration.active && !n.serviceWorker.controller) {
-                        !coi.quiet && console.log("Reloading page to make use of COOP/COEP Service Worker.");
-                        coi.doReload();
-                    }
                 },
                 (err) => {
                     !coi.quiet && console.error("COOP/COEP Service Worker failed to register:", err);

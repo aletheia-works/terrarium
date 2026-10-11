@@ -49,7 +49,7 @@
 - 対象 CLI はソースから `wasm32-unknown-emscripten` 向けにコンパイルする（WASI ではなく Emscripten を選んだ理由は `knowledge/aidlc-shared/portability.md`）。
 - ランタイムは Emscripten 自身の JavaScript ランタイム。不足分は `runtime/`（`syscalls.c`、`libterrarium.js`）で補う。
 - スレッドは Emscripten pthreads（nightly Rust、`-Zbuild-std`、`+atomics`、`-sPROXY_TO_PTHREAD`）。
-- 依存クレートへの変更は `patches/` のパッチとして持ち、`scripts/vendor-patched.sh` で適用する。対象ツール自身への変更が必要なときは、上流に入れるのではなく `patches/tools/<tool>-<version>.patch` として terrarium 側で持ち、`scripts/build-<tool>.sh` が適用する。
+- 依存クレートへの変更は `patches/` のパッチとして持ち、`scripts/vendor-patched.sh` で適用する。対象ツール自身への変更が必要なときは、上流に入れるのではなく `patches/tools/<tool>-<version>.patch` として terrarium 側で持ち、`mise-tasks/build/<tool>.sh` が適用する。
 - ブラウザ端末は xterm.js。端末要素と Session は `packages/terrarium`（TypeScript、npm パッケージ `@aletheia-works/terrarium`）にあり、Node.js 実行（`runtime/run-node.mjs`）とブラウザは同じ Session を共有する。
 
 ## Decided

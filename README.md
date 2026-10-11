@@ -32,6 +32,7 @@ The public site uses the latest stable releases, verified in Node and all three
 browsers before deployment. aube and Biome use official static musl binaries;
 pitchfork builds unmodified upstream source. See
 [integration/latest-tool-builds.md](integration/latest-tool-builds.md).
+Local build and CI entrypoints are described in [integration/tasks.md](integration/tasks.md).
 The browser terminal is at <https://aletheia-works.github.io/terrarium/>.
 
 Showing a bug next to its fix is [Vivarium](https://github.com/aletheia-works/vivarium)'s

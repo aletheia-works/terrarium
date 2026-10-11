@@ -283,7 +283,7 @@ export async function buildLatest(resolutions, destination, resolverRoot) {
       ]);
       run('tar', ['-xzf', archive, '--strip-components=1', '-C', source]);
       run('bash', [
-        path.join(root, 'scripts/build-native-guest.sh'),
+        path.join(root, 'mise-tasks/build/native.sh'),
         tool,
         source,
         destination,

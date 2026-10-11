@@ -82,30 +82,6 @@ description = "Browser tests against .site (run site:build first, with a build i
 dir = "packages/terrarium"
 run = "TERRARIUM_BUN=$(command -v bun) TERRARIUM_SITE_DIR=$(pwd)/../../.vendor/site-legacy bun run test:e2e"
 
-[tasks."site:build"]
-description = "Assemble the GitHub Pages site into .site/ with the staged web/dist/"
-run = "bash scripts/assemble-pages.sh .site"
-
-[tasks."ci:e2e"]
-description = "Test aube v2.6.1 and the latest stable pitchfork build in all browsers"
-run = [
-  'bun scripts/prepare-formicarium.mjs --from "$FORMICARIUM_INPUTS_DIR"',
-  "node scripts/fetch-formicarium-rc.mjs",
-  "cd packages/terrarium && bun install --frozen-lockfile",
-  "bash scripts/fetch-builds.sh v2.6.1",
-  "bash scripts/prepare-pitchfork-e2e.sh",
-  "bash scripts/stage-web.sh",
-  "TERRARIUM_PITCHFORK_REF=$(jq -r .ref .vendor/pitchfork-e2e.json) bash scripts/assemble-pages.sh .vendor/site-legacy legacy",
-  "cd packages/terrarium && TERRARIUM_BUN=$(command -v bun) TERRARIUM_SITE_DIR=$(pwd)/../../.vendor/site-legacy bun run test:e2e",
-  "bash scripts/assemble-pages.sh .vendor/site-formicarium",
-  "cd packages/terrarium && TERRARIUM_BUN=$(command -v bun) TERRARIUM_SITE_DIR=$(pwd)/../../.vendor/site-formicarium bun x playwright test --config playwright.formicarium.config.ts --workers=1 --retries=0",
-]
-
-[tasks."ci:terrarium"]
-description = "Local equivalent of test-terrarium.yml"
-dir = "packages/terrarium"
-run = ["bun ../../scripts/prepare-formicarium.mjs --from \"$FORMICARIUM_INPUTS_DIR\" --output \"${FORMICARIUM_INPUTS_ROOT:-../../.vendor/formicarium-inputs}\"", "node ../../scripts/fetch-formicarium-rc.mjs", "bun install --frozen-lockfile", "bun run typecheck", "bun run test", "bun run build"]
-
 # ── Infra ─────────────────────────────────────────────────────────────
 
 [tasks."infra:init"]
@@ -130,7 +106,7 @@ run = "bun test tests/formicarium-session.test.ts tests/formicarium-catalog.test
 
 [tasks."terrarium:formicarium-build"]
 description = "Type-check and stage the installed common runtime package"
-run = ["cd packages/terrarium && bun run typecheck", "bash scripts/assemble-pages.sh .vendor/site-formicarium"]
+run = ["cd packages/terrarium && bun run typecheck", "bash mise-tasks/site/build.sh .vendor/site-formicarium"]
 
 [tasks."terrarium:formicarium-e2e"]
 description = "Verify common runtime terminal and iframe in all three browsers"

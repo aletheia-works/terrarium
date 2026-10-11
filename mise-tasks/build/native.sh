@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
+#MISE description="Build an unmodified static musl guest"
 # Compile an already resolved source tree to a static musl guest.
 set -euo pipefail
-root=$(cd "$(dirname "$0")/.." && pwd)
+root=$(cd "$(dirname "$0")/../.." && pwd)
 tool=${1:?tool required}
 source_dir=${2:?source required}
 out=${3:?output required}

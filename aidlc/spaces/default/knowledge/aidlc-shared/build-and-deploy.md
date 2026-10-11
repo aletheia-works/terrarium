@@ -12,12 +12,12 @@ ships), `CMAKE_TOOLCHAIN_FILE_wasm32_unknown_emscripten` and
 
 ## Building any aube commit
 
-`scripts/build-aube.sh <aube source> <out>` builds one aube source tree:
+`mise-tasks/build/aube.sh <aube source> <out>` builds one aube source tree:
 it appends `scripts/vendor-patched.sh`'s `[patch]` block to its
 `Cargo.toml`, patches the toolchain's std, and builds release with
-threads. `scripts/stage-web.sh aube <name> <out>` then copies the build
+threads. `mise-tasks/web/stage.sh aube <name> <out>` then copies the build
 to `web/dist/aube/<name>/` and records it in `web/dist/builds.json`;
-`scripts/resolve-ref.sh <tool> [<ref>]` turns a branch, tag, commit or
+`mise-tasks/build/resolve.sh <tool> [<ref>]` turns a branch, tag, commit or
 `pr-<n>` of a tool in `web/tools.json` into the name and the commit. CI
 runs the same scripts. Two things bit on the first try:
 
@@ -35,7 +35,7 @@ runs the same scripts. Two things bit on the first try:
 
 ## Building pitchfork
 
-`scripts/build-pitchfork.sh <pitchfork source> <out>` does the same for
+`mise-tasks/build/pitchfork.sh <pitchfork source> <out>` does the same for
 pitchfork, after applying the newest `patches/tools/pitchfork-*.patch` to
 the source. That patch is written against a release (`v2.29.0`, the
 default build in `web/tools.json`); another ref may need it updated. It
@@ -53,7 +53,7 @@ and 7) under a second key with `package`.
 
 `.github/workflows/pages.yml` deploys the site with `actions/deploy-pages`
 (the Pages source is "GitHub Actions", set in `infra/github/main.tf`). The
-site is `web/`, the `web/terrarium.mjs` that `scripts/assemble-pages.sh`
+site is `web/`, the `web/terrarium.mjs` that `mise-tasks/site/build.sh`
 bundles from `packages/terrarium`, the fixtures, and the builds. Run by
 hand with a tool and a `ref` the workflow builds that ref; every day it
 builds each tool's `default` from `web/tools.json` if it has moved; a push
@@ -63,7 +63,7 @@ one that fails does not keep the others off the `builds` branch.
 The builds are build output and stay out of `main`: they live on the
 `builds` branch (`builds.json` and `<tool>/<name>/`), which the workflow
 rewrites as a single commit whenever it adds one, so old builds do not
-pile up in its history. `scripts/load-builds.sh` puts them in `web/dist/`.
+pile up in its history. `mise-tasks/build/load.sh` puts them in `web/dist/`.
 Until 2026-10-04 the site and the builds were both the `gh-pages` branch;
 `load-builds.sh` falls back to it while `builds` does not exist.
 

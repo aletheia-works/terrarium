@@ -1,6 +1,6 @@
 # Build the tools for the browser terminal and publish the site on GitHub
 # Pages. The tools are the keys of web/tools.json; each is built by
-# scripts/build-<tool>.sh.
+# mise-tasks/build/<tool>.sh.
 #
 # - Run it by hand with a tool and a ref (a branch, a tag, a commit, or
 #   pr-<n>) to build that ref and add it to the page as ?tool=<tool>&ref=<name>.
@@ -47,9 +47,8 @@ on:
       - "packages/terrarium/package.json"
       - "packages/terrarium/bun.lock"
       - "scripts/**"
+      - "mise-tasks/**"
       - ".github/workflows/build-latest-guests.yml"
-      - "scripts/load-builds.sh"
-      - "scripts/stage-web.sh"
       - "mise.toml"
       - ".github/workflows/pages.yml"
 
@@ -64,7 +63,7 @@ jobs:
       biome_repository: ${{ inputs.repository || 'biomejs/biome' }}
       biome_ref: ${{ inputs.tool == 'biome' && inputs.ref || '' }}
 
-  # The builds to make, as a JSON list of resolve-ref.sh outputs, leaving out
+  # The builds to make, as a JSON list of build:resolve outputs, leaving out
   # the ones already published at the same commit.
   resolve:
     if: github.repository_owner == 'aletheia-works'
@@ -88,11 +87,11 @@ jobs:
           else
             wanted=
           fi
-          scripts/load-builds.sh >/dev/null
+          mise-tasks/build/load.sh >/dev/null
           builds='[]'
           for tool in $wanted; do
-            # Without a ref, resolve-ref.sh takes the tool's default.
-            build=$(scripts/resolve-ref.sh "$tool" ${REF:+"$REF"} |
+            # Without a ref, build:resolve takes the tool's default.
+            build=$(mise-tasks/build/resolve.sh "$tool" ${REF:+"$REF"} |
               jq -Rn '[inputs | capture("^(?<key>[^=]+)=(?<value>.*)$")] | from_entries')
             name=$(jq -r .name <<<"$build")
             commit=$(jq -r .commit <<<"$build")
@@ -165,7 +164,7 @@ jobs:
       - name: Build
         env:
           TOOL: ${{ matrix.tool }}
-        run: '"scripts/build-$TOOL.sh" ../src "$RUNNER_TEMP/out"'
+        run: '"mise-tasks/build/$TOOL.sh" ../src "$RUNNER_TEMP/out"'
       - name: Save cargo cache
         if: always()
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -217,7 +216,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898233+github-actions[bot]@users.noreply.github.com"
           for attempt in 1 2 3 4 5; do
-            base=$(scripts/load-builds.sh | sed -n 's/^base=//p')
+            base=$(mise-tasks/build/load.sh | sed -n 's/^base=//p')
             stored=()
             for dir in "${dirs[@]}"; do
               build=$dir/build.json
@@ -228,7 +227,7 @@ jobs:
                 TERRARIUM_COMMIT=$commit \
                 TERRARIUM_PR=$(jq -r .pr "$build") \
                 TERRARIUM_SOURCE_URL=https://github.com/$(jq -r .repo "$build") \
-                scripts/stage-web.sh "$tool" "$name" "$dir"
+                mise-tasks/web/stage.sh "$tool" "$name" "$dir"
               stored+=("$tool $name (${commit::8})")
             done
             rm -rf web/dist/fixtures
@@ -271,8 +270,7 @@ jobs:
           FORMICARIUM_INPUTS_URL: ${{ vars.FORMICARIUM_INPUTS_URL || 'https://raw.githubusercontent.com/Marukome0743/terrarium/74baa1101ebf6d8fc310ea70de3ddc071a87c01f/inputs.tar.gz' }}
         run: |
           : "${FORMICARIUM_INPUTS_URL:?Configure the fixed formicarium input archive URL}"
-          bun scripts/prepare-formicarium.mjs --url "$FORMICARIUM_INPUTS_URL"
-          node scripts/fetch-formicarium-rc.mjs
+          bash mise-tasks/terrarium/prepare.sh --url "$FORMICARIUM_INPUTS_URL"
       - name: Install the package's dependencies
         working-directory: packages/terrarium
         run: bun install --frozen-lockfile
@@ -284,8 +282,8 @@ jobs:
         env:
           TERRARIUM_GUEST_SITE: .vendor/latest-guests
         run: |
-          scripts/load-builds.sh
-          scripts/stage-web.sh
+          mise-tasks/build/load.sh
+          mise-tasks/web/stage.sh
           mise run site:build
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0

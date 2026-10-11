@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# usage: load-builds.sh
+#MISE description="Load published legacy build artifacts"
+# usage: mise run build:load
 # Replace web/dist/ with the published builds: the `builds` branch, which
 # holds builds.json and <tool>/<name>/ for every build. Before that branch
 # existed the builds lived in gh-pages under web/dist/, so fall back to that.
@@ -7,7 +8,7 @@
 # was none, for a push that must not race another one. TERRARIUM_REMOTE
 # picks the remote (default: origin).
 set -euo pipefail
-root=$(cd "$(dirname "$0")/.." && pwd)
+root=$(cd "$(dirname "$0")/../.." && pwd)
 cd "$root"
 remote=${TERRARIUM_REMOTE:-origin}
 rm -rf web/dist

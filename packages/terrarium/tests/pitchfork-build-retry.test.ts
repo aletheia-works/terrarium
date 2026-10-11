@@ -45,10 +45,10 @@ for (const scenario of [
     let failure: unknown;
     let hasFailure = false;
     try {
-      mkdirSync(join(root, 'scripts'));
+      mkdirSync(join(root, 'mise-tasks/build'), { recursive: true });
       cpSync(
-        join(workspace, 'scripts/build-pitchfork.sh'),
-        join(root, 'scripts/build-pitchfork.sh'),
+        join(workspace, 'mise-tasks/build/pitchfork.sh'),
+        join(root, 'mise-tasks/build/pitchfork.sh'),
       );
       write('source/Cargo.toml', originalManifest);
       write(
@@ -124,7 +124,7 @@ esac
             '-c',
             'export PATH="/usr/bin:/bin:$PATH"; exec "$BASH" "$@"',
             'build-retry-test',
-            native(join(root, 'scripts/build-pitchfork.sh')),
+            native(join(root, 'mise-tasks/build/pitchfork.sh')),
             native(join(root, 'source')),
             native(join(root, 'out')),
           ],

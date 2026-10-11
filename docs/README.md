@@ -20,9 +20,9 @@ both the page and the shared runtime Workers. A narrower demo-only scope cannot
 isolate Workers under `/web/`. Visiting documentation alone registers no worker
 and loads no guest; documentation remains usable after a demo registers it.
 
-Keep `/web/`, its iframe messaging and all existing query parameters compatible.
-The root page forwards legacy terminal query links to `/web/`; a plain root URL
-now opens the documentation. Demo `run` parameters use the terminal's newline
+The root URL opens documentation. Link to `/web/` directly for the console and
+iframe, or `/demos/aube/` for the dedicated demo. These terminal entries accept
+their query parameters directly. Demo `run` parameters use the terminal's newline
 command format. Never add another Pages deployment workflow for this site.
 
 Biome's Astro support only analyzes frontmatter, so its JS unused-reference and

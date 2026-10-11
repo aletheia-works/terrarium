@@ -21,7 +21,6 @@ export default defineConfig({
         { label: 'Source builds', link: '/guides/source-builds/' },
         { label: 'Demos', link: '/demos/' },
       ],
-      head: [{ tag: 'script', attrs: { src: '/terrarium/legacy-entry.js' } }],
     }),
   ],
 });

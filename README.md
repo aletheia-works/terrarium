@@ -36,7 +36,7 @@ Local build and CI entrypoints are described in [integration/tasks.md](integrati
 The [documentation](https://aletheia-works.github.io/terrarium/) and
 [aube demo](https://aletheia-works.github.io/terrarium/demos/aube/) share one Pages
 site. The [original console](https://aletheia-works.github.io/terrarium/web/)
-and existing query links remain available.
+supports direct links with query parameters.
 
 Showing a bug next to its fix is [Vivarium](https://github.com/aletheia-works/vivarium)'s
 job, not terrarium's: Vivarium embeds two terrarium terminals, one per build.
@@ -61,7 +61,7 @@ The tool uses threads, so every way needs a cross-origin isolated page
 
 ### A link
 
-<https://aletheia-works.github.io/terrarium/> with the settings as query
+<https://aletheia-works.github.io/terrarium/web/> with the settings as query
 parameters, `run` repeated for several commands:
 `?ref=pr-1645&run=aube%20install&run=aube%20list`.
 

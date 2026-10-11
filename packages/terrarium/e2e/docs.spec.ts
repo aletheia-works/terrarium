@@ -112,11 +112,9 @@ test('dedicated demo preserves ref and session query parameters', async ({
     .toBe('/work\n');
 });
 
-test('legacy root query redirects unchanged to the existing console', async ({
-  page,
-}) => {
+test('original console accepts direct query links', async ({ page }) => {
   const query = '?tool=aube&fixture=&cwd=%2Fwork&run=pwd';
-  await page.goto(`${SITE}/terrarium/${query}`);
+  await page.goto(`${SITE}/terrarium/web/${query}`);
   await expect(page).toHaveURL(`${SITE}/terrarium/web/${query}`);
   await expect(page.locator('#status')).toContainText('Ready in');
   await expect

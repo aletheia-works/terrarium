@@ -40,8 +40,12 @@ if (typeof window === 'undefined') {
                     }
 
                     const newHeaders = new Headers(response.headers);
+                    // WebKit blocks module imports in require-corp workers when
+                    // these headers come from a Service Worker. Keep navigation
+                    // require-corp, but use credentialless for the worker graph.
+                    const workerScript = r.destination === "script" || r.destination === "worker";
                     newHeaders.set("Cross-Origin-Embedder-Policy",
-                        coepCredentialless ? "credentialless" : "require-corp"
+                        (coepCredentialless || workerScript) ? "credentialless" : "require-corp"
                     );
                     if (!coepCredentialless) {
                         newHeaders.set("Cross-Origin-Resource-Policy", "cross-origin");

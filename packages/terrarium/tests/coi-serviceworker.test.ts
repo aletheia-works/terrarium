@@ -103,3 +103,34 @@ test('an already isolated page neither registers nor reloads', async () => {
   expect(page.registrations()).toBe(0);
   expect(page.reloads()).toBe(0);
 });
+
+test('Pages navigation stays require-corp while the worker module graph remains loadable', async () => {
+  const listeners = new Map<string, (event: unknown) => void>();
+  runInNewContext(source, {
+    self: {
+      addEventListener: (name: string, listener: (event: unknown) => void) =>
+        listeners.set(name, listener),
+    },
+    fetch: async () => new Response('module source'),
+    Headers,
+    Response,
+    Request,
+  });
+  for (const destination of ['document', 'worker', 'script']) {
+    let response: Promise<Response> | undefined;
+    listeners.get('fetch')!({
+      request: { destination, cache: 'default', mode: 'same-origin' },
+      respondWith: (value: Promise<Response>) => {
+        response = value;
+      },
+    });
+    const result = await response!;
+    expect(result.headers.get('Cross-Origin-Embedder-Policy')).toBe(
+      destination === 'document' ? 'require-corp' : 'credentialless',
+    );
+    expect(result.headers.get('Cross-Origin-Resource-Policy')).toBe(
+      'cross-origin',
+    );
+    expect(await result.text()).toBe('module source');
+  }
+});

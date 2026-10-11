@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# usage: build-aube.sh <aube source dir> <out dir>
+#MISE description="Build aube for Emscripten"
+# usage: mise run build:aube <aube source dir> <out dir>
 # Release build of the aube CLI for the browser terminal, with threads: point
 # the source at terrarium's patched crates, patch the toolchain's std, build,
 # and copy aube.js and aube.wasm to <out dir>. Needs emsdk (see
@@ -9,7 +10,7 @@
 # defaults to ~/.tem-aube-mt: keep it short on Windows, where CMake's
 # try_compile otherwise hits the path-length limit.
 set -euo pipefail
-root=$(cd "$(dirname "$0")/.." && pwd)
+root=$(cd "$(dirname "$0")/../.." && pwd)
 src=$(cd "$1" && pwd)
 mkdir -p "$2"
 out=$(cd "$2" && pwd)

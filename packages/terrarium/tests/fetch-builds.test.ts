@@ -38,7 +38,7 @@ for (const guest of [
       },
     });
     try {
-      await mkdir(join(root, 'scripts'));
+      await mkdir(join(root, 'mise-tasks/build'), { recursive: true });
       await mkdir(join(root, 'web/dist'), { recursive: true });
       const existing = { source: { commit: 'pitchfork' } };
       await writeFile(
@@ -49,15 +49,15 @@ for (const guest of [
         }),
       );
       await copyFile(
-        resolve(import.meta.dir, '../../../scripts/fetch-builds.sh'),
-        join(root, 'scripts/fetch-builds.sh'),
+        resolve(import.meta.dir, '../../../mise-tasks/build/fetch.sh'),
+        join(root, 'mise-tasks/build/fetch.sh'),
       );
       const child = Bun.spawn({
         cmd: [
           process.platform === 'win32'
             ? 'C:/Program Files/Git/bin/bash.exe'
             : 'bash',
-          join(root, 'scripts/fetch-builds.sh'),
+          join(root, 'mise-tasks/build/fetch.sh'),
           'v2.6.1',
         ],
         env: {

@@ -134,7 +134,7 @@ test('assembly preflight preserves an existing output when fixed inputs are miss
   const f = await fixture();
   await mkdir(f.output);
   await writeFile(path.join(f.output, 'baseline'), 'preserved');
-  const script = new URL('../../../scripts/assemble-pages.sh', import.meta.url)
+  const script = new URL('../../../mise-tasks/site/build.sh', import.meta.url)
     .pathname;
   const result = Bun.spawnSync(['bash', script, f.output], {
     env: {
@@ -181,12 +181,18 @@ test('four workflows pin the verified input URL and guard supply before installa
     expect(source).toContain(
       "vars.FORMICARIUM_INPUTS_URL || 'https://raw.githubusercontent.com/Marukome0743/terrarium/74baa1101ebf6d8fc310ea70de3ddc071a87c01f/inputs.tar.gz'",
     );
-    expect(
-      source.indexOf('node scripts/fetch-formicarium-rc.mjs'),
-    ).toBeGreaterThan(source.indexOf('prepare-formicarium.mjs --url'));
-    expect(
-      source.indexOf('node scripts/fetch-formicarium-rc.mjs'),
-    ).toBeLessThan(source.indexOf('bun install --frozen-lockfile'));
+    const prepare = 'bash mise-tasks/terrarium/prepare.sh --url';
+    expect(source).toContain(prepare);
+    expect(source.indexOf(prepare)).toBeLessThan(
+      source.indexOf('bun install --frozen-lockfile'),
+    );
+    const task = await readFile(
+      new URL('../../../mise-tasks/terrarium/prepare.sh', import.meta.url),
+      'utf8',
+    );
+    expect(task.indexOf('scripts/fetch-formicarium-rc.mjs')).toBeGreaterThan(
+      task.indexOf('scripts/prepare-formicarium.mjs'),
+    );
     const guard = source
       .split('\n')
       .find((line) => line.includes('FORMICARIUM_INPUTS_URL:?'))
@@ -217,7 +223,7 @@ test('four workflows pin the verified input URL and guard supply before installa
       }
     }
     expect(source.indexOf('FORMICARIUM_INPUTS_URL:?')).toBeLessThan(
-      source.indexOf('prepare-formicarium.mjs --url'),
+      source.indexOf(prepare),
     );
   }
 });
@@ -274,7 +280,9 @@ test('CI verifies fixed inputs before install and retains separate three-browser
       'utf8',
     );
     expect(source).toContain('FORMICARIUM_INPUTS_URL:?');
-    expect(source.indexOf('prepare-formicarium.mjs --url')).toBeLessThan(
+    const prepare = 'bash mise-tasks/terrarium/prepare.sh --url';
+    expect(source).toContain(prepare);
+    expect(source.indexOf(prepare)).toBeLessThan(
       source.indexOf('bun install --frozen-lockfile'),
     );
     if (name === 'test-e2e.yml') {

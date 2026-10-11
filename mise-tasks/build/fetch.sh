@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# usage: fetch-builds.sh <name>...
+#MISE description="Fetch published legacy aube builds"
+# usage: mise run build:fetch <name>...
 # Download published builds of aube from the GitHub Pages site into web/dist/,
 # with their entries of builds.json, so the site can be assembled and tested
 # without building aube (which takes the better part of an hour). Needs curl
@@ -7,7 +8,7 @@
 # These are Emscripten artifacts even when the published catalogue also
 # describes a formicarium guest; omit the guest selector from their legacy build metadata.
 set -euo pipefail
-root=$(cd "$(dirname "$0")/.." && pwd)
+root=$(cd "$(dirname "$0")/../.." && pwd)
 site=${TERRARIUM_SITE:-https://aletheia-works.github.io/terrarium/web}
 dist=$root/web/dist
 mkdir -p "$dist"

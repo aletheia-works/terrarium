@@ -43,8 +43,7 @@ jobs:
           FORMICARIUM_INPUTS_URL: ${{ vars.FORMICARIUM_INPUTS_URL || 'https://raw.githubusercontent.com/Marukome0743/terrarium/74baa1101ebf6d8fc310ea70de3ddc071a87c01f/inputs.tar.gz' }}
         run: |
           : "${FORMICARIUM_INPUTS_URL:?Configure the fixed formicarium input archive URL}"
-          bun scripts/prepare-formicarium.mjs --url "$FORMICARIUM_INPUTS_URL"
-          node scripts/fetch-formicarium-rc.mjs
+          bash mise-tasks/terrarium/prepare.sh --url "$FORMICARIUM_INPUTS_URL"
       - name: Install + build + test
         run: |
           bun install --frozen-lockfile

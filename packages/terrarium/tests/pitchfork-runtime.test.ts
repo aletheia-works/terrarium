@@ -20,6 +20,12 @@ import { tmpdir } from 'node:os';
 import { delimiter, dirname, join, resolve } from 'node:path';
 
 const workspace = resolve(import.meta.dir, '../../..');
+const scriptPaths: Record<string, string> = {
+  'resolve-ref.sh': 'mise-tasks/build/resolve.sh',
+  'stage-web.sh': 'mise-tasks/web/stage.sh',
+  'prepare-pitchfork-e2e.sh': 'mise-tasks/ci/pitchfork-prepare.sh',
+  'vendor-patched.sh': 'scripts/vendor-patched.sh',
+};
 const bash =
   process.platform === 'win32' ? 'C:/Program Files/Git/bin/bash.exe' : 'bash';
 const sha = '0123456789abcdef0123456789abcdef01234567';
@@ -46,8 +52,10 @@ function write(path: string, contents: string): void {
 }
 
 function run(script: string, args: string[] = []) {
+  const scriptPath = scriptPaths[script];
+  if (!scriptPath) throw new Error(`unknown test script: ${script}`);
   const invocation = [
-    join(root, 'scripts', script).replaceAll('\\', '/'),
+    join(root, scriptPath).replaceAll('\\', '/'),
     ...args.map((arg) => arg.replaceAll('\\', '/')),
   ];
   const result = Bun.spawnSync({
@@ -86,14 +94,9 @@ function metadata(text: string): Record<string, string> {
 
 beforeEach(() => {
   root = mkdtempSync(join(temporaryParent, 'terrarium-pitchfork-'));
-  mkdirSync(join(root, 'scripts'));
-  for (const script of [
-    'resolve-ref.sh',
-    'stage-web.sh',
-    'prepare-pitchfork-e2e.sh',
-    'vendor-patched.sh',
-  ]) {
-    cpSync(join(workspace, 'scripts', script), join(root, 'scripts', script));
+  for (const file of Object.values(scriptPaths)) {
+    mkdirSync(dirname(join(root, file)), { recursive: true });
+    cpSync(join(workspace, file), join(root, file));
   }
   write(
     'web/tools.json',

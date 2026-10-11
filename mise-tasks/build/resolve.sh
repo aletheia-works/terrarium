@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# usage: resolve-ref.sh <tool> [<ref>]
+#MISE description="Resolve a tool branch, tag, commit or PR"
+# usage: mise run build:resolve <tool> [<ref>]
 # Resolve a ref of a tool in web/tools.json to the commit to build, printed as
 # GITHUB_OUTPUT lines:
 #   tool=    the tool
@@ -12,8 +13,8 @@
 # its URL, or latest for the latest stable release; without one, the tool's default build. Needs `gh` (GH_TOKEN in CI)
 # and jq.
 set -euo pipefail
-root=$(cd "$(dirname "$0")/.." && pwd)
-[[ $# -ge 1 && $# -le 2 ]] || { echo 'usage: resolve-ref.sh <tool> [<ref>]' >&2; exit 1; }
+root=$(cd "$(dirname "$0")/../.." && pwd)
+[[ $# -ge 1 && $# -le 2 ]] || { echo 'usage: mise run build:resolve <tool> [<ref>]' >&2; exit 1; }
 tool=$1
 entry=$(jq -e --arg t "$tool" '.[$t]' "$root/web/tools.json") ||
   { echo "unknown tool: $tool" >&2; exit 1; }

@@ -39,7 +39,7 @@ import { Session, type Tool } from './session.ts';
 export const DEFAULT_BASE = 'https://aletheia-works.github.io/terrarium/web/';
 
 // Replaced with the deploy's version when the site's bundle is built (see
-// scripts/assemble-pages.sh). GitHub Pages lets browsers cache files for 10
+// mise-tasks/site/build.sh). GitHub Pages lets browsers cache files for 10
 // minutes, so the version in each URL keeps the files of one deploy together.
 declare const __TERRARIUM_VERSION__: string | undefined;
 const VERSION =

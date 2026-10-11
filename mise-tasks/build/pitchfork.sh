@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
-# usage: build-pitchfork.sh <pitchfork source dir> <out dir>
+#MISE description="Build pitchfork for Emscripten"
+# usage: mise run build:pitchfork <pitchfork source dir> <out dir>
 # Release build of the pitchfork CLI for the browser terminal, with threads:
 # apply terrarium's patch to pitchfork itself (patches/tools/pitchfork-*.patch,
 # the newest one), point the source at terrarium's patched crates, patch the
 # toolchain's std, build, and copy pitchfork.js and pitchfork.wasm to
 # <out dir>. Only the commands that do not need pitchfork's supervisor are
-# meant to work. Needs what build-aube.sh needs. CARGO_TARGET_DIR defaults
+# meant to work. Needs the same Emscripten environment as build:aube. CARGO_TARGET_DIR defaults
 # to ~/.tem-pf.
 set -euo pipefail
-root=$(cd "$(dirname "$0")/.." && pwd)
+root=$(cd "$(dirname "$0")/../.." && pwd)
 src=$(cd "$1" && pwd)
 mkdir -p "$2"
 out=$(cd "$2" && pwd)

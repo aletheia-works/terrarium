@@ -138,7 +138,7 @@ PR from a fork, run `mise run lint:all:fix` locally.
 ### 4.8 Builds, Pages and publishing
 
 - **Builds** of each tool in `web/tools.json` are made by
-  `.github/workflows/pages.yml` with `scripts/build-<tool>.sh` (by hand
+  `.github/workflows/pages.yml` with `mise-tasks/build/<tool>.sh` (by hand
   with a tool and a ref, or daily for each tool's `default`) and stored on
   the `builds` branch, rewritten as one commit. They never go on `main`.
 - **A change to a tool's own code** is a patch in `patches/tools/`, rather than

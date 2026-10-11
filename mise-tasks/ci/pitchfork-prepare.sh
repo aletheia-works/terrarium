@@ -1,19 +1,20 @@
 #!/usr/bin/env bash
+#MISE description="Verify and stage the resolved legacy pitchfork build"
 # Reuse a staged build, or stage a fresh build from TERRARIUM_PITCHFORK_BUILD.
-# Build it first with scripts/build-pitchfork.sh <source> <out>.
+# Build it first with mise-tasks/build/pitchfork.sh <source> <out>.
 set -euo pipefail
-root=$(cd "$(dirname "$0")/.." && pwd)
+root=$(cd "$(dirname "$0")/../.." && pwd)
 ref=${TERRARIUM_PITCHFORK_REF:-}
 commit=${TERRARIUM_PITCHFORK_COMMIT:-}
 if [[ -z $ref || -z $commit ]]; then
-  resolved=$(bash "$root/scripts/resolve-ref.sh" pitchfork latest)
+  resolved=$(bash "$root/mise-tasks/build/resolve.sh" pitchfork latest)
   ref=$(printf '%s\n' "$resolved" | sed -n 's/^name=//p')
   commit=$(printf '%s\n' "$resolved" | sed -n 's/^commit=//p')
 fi
 [[ $ref =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ && $commit =~ ^[0-9a-f]{40}$ ]] ||
   { echo 'invalid resolved pitchfork identity' >&2; exit 1; }
 if [[ -n ${TERRARIUM_PITCHFORK_BUILD:-} ]]; then
-  TERRARIUM_COMMIT=$commit bash "$root/scripts/stage-web.sh" \
+  TERRARIUM_COMMIT=$commit bash "$root/mise-tasks/web/stage.sh" \
     pitchfork "$ref" "$TERRARIUM_PITCHFORK_BUILD"
 fi
 for extension in js wasm; do

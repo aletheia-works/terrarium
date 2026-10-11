@@ -31,7 +31,7 @@ jobs:
         id: pitchfork-ref
         env:
           GH_TOKEN: ${{ github.token }}
-        run: bash scripts/resolve-ref.sh pitchfork latest >> "$GITHUB_OUTPUT"
+        run: bash mise-tasks/build/resolve.sh pitchfork latest >> "$GITHUB_OUTPUT"
 
   aube-ref:
     name: Resolve latest stable aube
@@ -52,7 +52,7 @@ jobs:
         id: aube-ref
         env:
           GH_TOKEN: ${{ github.token }}
-        run: bash scripts/resolve-ref.sh aube latest >> "$GITHUB_OUTPUT"
+        run: bash mise-tasks/build/resolve.sh aube latest >> "$GITHUB_OUTPUT"
 
   pitchfork-build:
     needs: pitchfork-ref
@@ -79,7 +79,7 @@ jobs:
           path: ${{ runner.temp }}/out/
           # Include the build's script dependencies and linker inputs; unrelated
           # fetch, staging and lint scripts do not change the compiled artifact.
-          key: pitchfork-${{ runner.os }}-${{ needs.pitchfork-ref.outputs.commit }}-${{ env.EMSDK_VERSION }}-${{ hashFiles('patches/**', 'runtime/syscalls.c', 'runtime/libterrarium.js', 'scripts/build-pitchfork.sh', 'scripts/emscripten-env.sh', 'scripts/patch-rust-src.sh', 'scripts/vendor-patched.sh') }}
+          key: pitchfork-${{ runner.os }}-${{ needs.pitchfork-ref.outputs.commit }}-${{ env.EMSDK_VERSION }}-${{ hashFiles('patches/**', 'runtime/syscalls.c', 'runtime/libterrarium.js', 'mise-tasks/build/pitchfork.sh', 'scripts/emscripten-env.sh', 'scripts/patch-rust-src.sh', 'scripts/vendor-patched.sh') }}
       - name: Install Ninja
         if: steps.pitchfork.outputs.cache-hit != 'true'
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ninja-build
@@ -116,7 +116,7 @@ jobs:
           restore-keys: cargo-pitchfork-${{ runner.os }}-${{ hashFiles('patches/**') }}-
       - name: Build
         if: steps.pitchfork.outputs.cache-hit != 'true'
-        run: scripts/build-pitchfork.sh ../src "$RUNNER_TEMP/out"
+        run: mise-tasks/build/pitchfork.sh ../src "$RUNNER_TEMP/out"
       - name: Save cargo cache
         if: always() && steps.pitchfork.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -160,7 +160,7 @@ jobs:
           path: ${{ runner.temp }}/out/
           # Include the build's script dependencies and linker inputs; unrelated
           # fetch, staging and lint scripts do not change the compiled artifact.
-          key: aube-${{ runner.os }}-${{ env.AUBE_COMMIT }}-${{ env.EMSDK_VERSION }}-${{ hashFiles('patches/**', 'runtime/syscalls.c', 'runtime/libterrarium.js', 'scripts/build-aube.sh', 'scripts/emscripten-env.sh', 'scripts/patch-rust-src.sh', 'scripts/vendor-patched.sh') }}
+          key: aube-${{ runner.os }}-${{ env.AUBE_COMMIT }}-${{ env.EMSDK_VERSION }}-${{ hashFiles('patches/**', 'runtime/syscalls.c', 'runtime/libterrarium.js', 'mise-tasks/build/aube.sh', 'scripts/emscripten-env.sh', 'scripts/patch-rust-src.sh', 'scripts/vendor-patched.sh') }}
       - name: Install Ninja
         if: steps.aube.outputs.cache-hit != 'true'
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ninja-build
@@ -197,7 +197,7 @@ jobs:
           restore-keys: cargo-aube-${{ runner.os }}-${{ hashFiles('patches/**') }}-
       - name: Build
         if: steps.aube.outputs.cache-hit != 'true'
-        run: scripts/build-aube.sh ../src "$RUNNER_TEMP/out"
+        run: mise-tasks/build/aube.sh ../src "$RUNNER_TEMP/out"
       - name: Save cargo cache
         if: always() && steps.aube.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -247,8 +247,7 @@ jobs:
           FORMICARIUM_INPUTS_URL: ${{ vars.FORMICARIUM_INPUTS_URL || 'https://raw.githubusercontent.com/Marukome0743/terrarium/74baa1101ebf6d8fc310ea70de3ddc071a87c01f/inputs.tar.gz' }}
         run: |
           : "${FORMICARIUM_INPUTS_URL:?Configure the fixed formicarium input archive URL}"
-          bun scripts/prepare-formicarium.mjs --url "$FORMICARIUM_INPUTS_URL"
-          node scripts/fetch-formicarium-rc.mjs
+          bash mise-tasks/terrarium/prepare.sh --url "$FORMICARIUM_INPUTS_URL"
 
       - name: Install dependencies
         working-directory: packages/terrarium
@@ -271,11 +270,11 @@ jobs:
           AUBE_COMMIT: ${{ needs.aube-build.outputs.commit }}
         run: |
           TERRARIUM_SOURCE_URL=https://github.com/aubepkg/aube TERRARIUM_REF="$AUBE_REF" TERRARIUM_COMMIT="$AUBE_COMMIT" \
-            bash scripts/stage-web.sh aube "$AUBE_REF" "$RUNNER_TEMP/aube"
-          TERRARIUM_PITCHFORK_BUILD="$RUNNER_TEMP/pitchfork" bash scripts/prepare-pitchfork-e2e.sh
-          bash scripts/stage-web.sh
-          bash scripts/assemble-pages.sh .vendor/site-legacy legacy
-          bash scripts/assemble-pages.sh .vendor/site-formicarium formicarium
+            bash mise-tasks/web/stage.sh aube "$AUBE_REF" "$RUNNER_TEMP/aube"
+          TERRARIUM_PITCHFORK_BUILD="$RUNNER_TEMP/pitchfork" bash mise-tasks/ci/pitchfork-prepare.sh
+          bash mise-tasks/web/stage.sh
+          bash mise-tasks/site/build.sh .vendor/site-legacy legacy
+          bash mise-tasks/site/build.sh .vendor/site-formicarium formicarium
           sha256sum .vendor/site-legacy/web/terrarium.mjs .vendor/site-formicarium/web/terrarium.mjs
           sha256sum packages/terrarium/src/{terminal,formicarium-session,catalog}.ts
 

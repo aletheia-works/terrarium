@@ -51,7 +51,7 @@
           - "**/*.wat"
           - "runtime/**"
           - "scripts/emscripten-env.sh"
-          - "scripts/build-*.sh"
+          - "mise-tasks/build/*.sh"
 
 "type: docs":
   - changed-files:

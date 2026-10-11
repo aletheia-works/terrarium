@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# usage: stage-web.sh [<tool> <name> <dir containing <tool>.js and <tool>.wasm>]
+#MISE description="Stage legacy builds and fixtures"
+# usage: mise run web:stage [<tool> <name> <dir containing <tool>.js and <tool>.wasm>]
 # Copy every fixture to web/dist/fixtures/<fixture>.json, which the page loads
 # from. With a build, also copy it to web/dist/<tool>/<name>/ and record it in
 # web/dist/builds.json, from these variables (all optional):
@@ -8,10 +9,10 @@
 #   TERRARIUM_COMMIT      commit that was built
 #   TERRARIUM_PR          URL of the pull request it is the head of
 set -euo pipefail
-root=$(cd "$(dirname "$0")/.." && pwd)
+root=$(cd "$(dirname "$0")/../.." && pwd)
 dist="$root/web/dist"
 [[ $# -eq 0 || $# -eq 3 ]] ||
-  { echo 'usage: stage-web.sh [<tool> <name> <build dir>]' >&2; exit 1; }
+  { echo 'usage: mise run web:stage [<tool> <name> <build dir>]' >&2; exit 1; }
 if [ $# -eq 3 ]; then
   tool=$1 name=$2
   jq -e --arg t "$tool" '.[$t] != null' "$root/web/tools.json" >/dev/null ||

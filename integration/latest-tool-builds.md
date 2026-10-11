@@ -6,9 +6,8 @@ are `latest`; deployed defaults are concrete tags.
 
 The `build-latest-guests.yml` workflow runs directly on PRs and is reusable by
 Pages. PR updates cancel older runs of the same PR; Pages calls use separate
-concurrency groups. The explicit `latest / guests` job name is temporary during migration to the
-OpenTofu-managed `guests` check. After the ruleset update is applied, a
-follow-up PR removes that explicit name. It resolves each tag and full commit
+concurrency groups. The direct PR job uses its default `guests` name, matching the OpenTofu-managed
+required check. It resolves each tag and full commit
 once. It prefers the official x86-64 static musl release archive, verifies its
 publisher SHA256 and size, extracts its executable without following archive
 links, and validates the ELF before use. It records the release URL and archive
